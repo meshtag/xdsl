@@ -245,6 +245,15 @@ class Printer:
             self._print_operand(operand)
         self.print(")")
 
+    def print_paramattr_params_default_format(
+            self, attribute: ParametrizedAttribute) -> None:
+        """
+        Print the parameters of a parametrized attribute using the default
+        format.
+        The format is `param (param ',')*`
+        """
+        self.print_list(attribute.parameters, self.print_attribute)
+
     def print_attribute(self, attribute: Attribute) -> None:
         if isinstance(attribute, IntegerType):
             width = attribute.parameters[0]
@@ -286,7 +295,10 @@ class Printer:
         self.print(f'!{attribute.name}')
         if len(attribute.parameters) != 0:
             self.print("<")
-            self.print_list(attribute.parameters, self.print_attribute)
+            if self.print_generic_format:
+                self.print_paramattr_params_default_format(attribute)
+            else:
+                attribute.print_parameters(self)
             self.print(">")
 
     def print_successors(self, successors: List[Block]):

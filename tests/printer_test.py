@@ -339,6 +339,33 @@ module() {
 #
 
 
+@irdl_attr_definition
+class IntData(Data[int]):
+    """An attribute representing an integer."""
+    name = "test.int"
+
+
+@irdl_attr_definition
+class NoParamsAttr(ParametrizedAttribute):
+    """A singleton attribute."""
+    name = "test.no_params"
+
+
+@irdl_attr_definition
+class TwoParamsAttr(ParametrizedAttribute):
+    """An attribute with two unrestricted parameters."""
+    name = "test.two_params"
+    param1 = ParameterDef[Attribute]
+    param2 = ParameterDef[Attribute]
+
+
+@irdl_op_definition
+class OneAttrOp(Operation):
+    """An operation with a single attribute."""
+    name = "test.oneattr"
+    attr = AttributeDef(AnyAttr())
+
+
 @irdl_op_definition
 class PlusCustomFormatOp(Operation):
     name = "test.add"
@@ -360,13 +387,11 @@ class PlusCustomFormatOp(Operation):
         printer.print(" ", self.lhs, " + ", self.rhs)
 
 
-def test_generic_format():
-    """
-    Test that we can use generic formats in operations.
-    """
+def test_parsing_generic_format():
+    """Test that we can use op generic formats in parsing."""
     prog = \
         """module() {
-    %0 : !i32 = arith.constant() ["value" = 42 : !i32]
+    %0 : !i32 = "arith.constant"() ["value" = 42 : !i32]
     %1 : !i32 = "test.add"(%0: !i32, %0: !i32)
     }"""
 
@@ -391,10 +416,8 @@ module() {
     assert file.getvalue().strip() == expected.strip()
 
 
-def test_custom_format():
-    """
-    Test that we can use custom formats in operations.
-    """
+def test_op_custom_format():
+    """Test that we can use op custom formats in parsing."""
     prog = \
         """module() {
     %0 : !i32 = arith.constant() ["value" = 42 : !i32]
@@ -422,10 +445,8 @@ module() {
     assert file.getvalue().strip() == expected.strip()
 
 
-def test_custom_format():
-    """
-    Test that we can print using generic formats.
-    """
+def test_generic_format_printing():
+    """Test that we can print using generic formats."""
     prog = \
         """module() {
     %0 : !i32 = arith.constant() ["value" = 42 : !i32]

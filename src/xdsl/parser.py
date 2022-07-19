@@ -290,6 +290,9 @@ class Parser:
         self.parse_char(")")
         return res
 
+    def parse_paramattr_params(self) -> List[Attribute]:
+        return self.parse_list(self.parse_optional_attribute)
+
     def parse_optional_attribute(self) -> Optional[Attribute]:
         # Shorthand for StringAttr
         string_lit = self.parse_optional_str_literal()
@@ -323,9 +326,28 @@ class Parser:
         if parsed is None:
             return None
 
-        parsed = self.parse_optional_char("i")
+        # Generic format
+        parsed = self.parse_optional_char('"')
+        if parsed:
+            attr_def_name = self.parse_alpha_num(skip_white_space=False)
+            attr_def = self._ctx.get_attr(attr_def_name)
+
+            if not issubclass(attr_def, ParametrizedAttribute):
+                raise Exception(
+                    f"{attr_def.name} does not have a generic format,"
+                    " since it is not a ParametrizedAttribute.")
+
+            self.parse_char('"')
+            if self.parse_optional_char("<") is None:
+                return attr_def()
+
+            params = self.parse_paramattr_params()
+            self.parse_char(">")
+            return attr_def(params)
 
         # shorthand for integer types
+        parsed = self.parse_optional_char("i")
+
         if parsed:
             num = self.parse_optional_int_literal()
             if num:
@@ -343,7 +365,8 @@ class Parser:
             self.parse_char(">")
             return attr_def(attr)
 
-        param_list = self.parse_list(self.parse_optional_attribute)
+        assert (issubclass(attr_def, ParametrizedAttribute))
+        param_list = attr_def.parse_parameters(self)
         self.parse_char(">")
         return attr_def(param_list)
 

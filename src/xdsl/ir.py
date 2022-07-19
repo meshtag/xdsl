@@ -234,6 +234,15 @@ class ParametrizedAttribute(Attribute):
         """Get the IRDL attribute definition."""
         ...
 
+    @classmethod
+    def parse_parameters(cls, parser: Parser) -> list[Attribute]:
+        """Parse the attribute parameters."""
+        return parser.parse_list(parser.parse_optional_attribute)
+
+    def print_parameters(self, printer: Printer) -> None:
+        """Print the attribute parameters."""
+        printer.print_list(self.parameters, printer.print_attribute)
+
 
 @dataclass
 class Operation:
