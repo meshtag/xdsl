@@ -5,8 +5,10 @@ from io import StringIO
 from xdsl.dialects.builtin import Builtin, ModuleOp, IntegerType
 from xdsl.dialects.arith import Arith, Addi, Constant
 from xdsl.diagnostic import Diagnostic
-from xdsl.ir import MLContext
-from xdsl.irdl import irdl_op_definition, Operation, OperandDef, ResultDef
+from xdsl.ir import (MLContext, ParametrizedAttribute, Attribute)
+from xdsl.irdl import (irdl_op_definition, Operation, OperandDef, ResultDef,
+                       irdl_attr_definition, ParameterDef, Data, AttributeDef,
+                       AnyAttr)
 from xdsl.printer import Printer
 from xdsl.parser import Parser
 
@@ -355,8 +357,8 @@ class NoParamsAttr(ParametrizedAttribute):
 class TwoParamsAttr(ParametrizedAttribute):
     """An attribute with two unrestricted parameters."""
     name = "test.two_params"
-    param1 = ParameterDef[Attribute]
-    param2 = ParameterDef[Attribute]
+    param1: ParameterDef[Attribute]
+    param2: ParameterDef[Attribute]
 
 
 @irdl_op_definition
@@ -374,7 +376,7 @@ class PlusCustomFormatOp(Operation):
     res = ResultDef(IntegerType)
 
     @classmethod
-    def parse(cls, result_types: List[Attribute],
+    def parse(cls, result_types: list[Attribute],
               parser: Parser) -> PlusCustomFormatOp:
         lhs = parser.parse_ssa_value()
         parser.skip_white_space()
