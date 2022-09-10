@@ -167,20 +167,19 @@ class Printer:
         # No results
         if len(results) == 0:
             return
-
         # One result
-        if len(results) == 1:
+        elif len(results) == 1:
             self._print_result_value(op, 0)
             self.print(" = ")
             return
-
-        # Multiple results
-        self.print("(")
-        self._print_result_value(op, 0)
-        for idx in range(1, len(results)):
-            self.print(", ")
-            self._print_result_value(op, idx)
-        self.print(") = ")
+        else:
+            # Multiple results
+            self.print("(")
+            self._print_result_value(op, 0)
+            for idx in range(1, len(results)):
+                self.print(", ")
+                self._print_result_value(op, idx)
+            self.print(") = ")
 
     def print_ssa_value(self, value: SSAValue) -> None:
         if ssa_val := self._ssa_values.get(value):
