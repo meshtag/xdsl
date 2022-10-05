@@ -201,3 +201,17 @@ class OperationOp(Operation):
             raise ValueError("name attribute is required")
         if not isinstance(self.attributes["name"], StringAttr):
             raise ValueError("name attribute must be a string attribute")
+
+    def get_operands(self) -> OperandsOp | None:
+        """Get the operation operands definition"""
+        for op in self.body.ops:
+            if isinstance(op, OperandsOp):
+                return op
+        return None
+
+    def get_results(self) -> ResultsOp | None:
+        """Get the operation results definition"""
+        for op in self.body.ops:
+            if isinstance(op, ResultsOp):
+                return op
+        return None
