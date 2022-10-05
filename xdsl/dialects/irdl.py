@@ -117,6 +117,14 @@ class DialectOp(Operation):
         if not isinstance(self.attributes["name"], StringAttr):
             raise ValueError("name attribute must be a string attribute")
 
+    def get_op_defs(self) -> list[OperationOp]:
+        """Get the operations defined by the dialect"""
+        return [op for op in self.body.ops if isinstance(op, OperationOp)]
+
+    def get_type_defs(self) -> list[TypeOp]:
+        """Get the types defined by the dialect"""
+        return [op for op in self.body.ops if isinstance(op, TypeOp)]
+
 
 @irdl_op_definition
 class ParametersOp(Operation):
