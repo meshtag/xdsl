@@ -4,6 +4,7 @@ import os
 from io import IOBase, StringIO
 
 from xdsl.ir import MLContext
+from xdsl.pyrdl_printer import PyRDLPrinter
 from xdsl.parser import Parser
 from xdsl.printer import Printer
 from xdsl.dialects.func import Func
@@ -20,6 +21,8 @@ from xdsl.dialects.irdl import IRDL
 from xdsl.irdl_mlir_printer import IRDLPrinter
 
 from typing import Dict, Callable, List
+
+from xdsl.pyrdl_printer import PyRDLPrinter
 
 
 class xDSLOptMain:
@@ -239,9 +242,14 @@ class xDSLOptMain:
             irdl_to_mlir = IRDLPrinter(stream=output)
             irdl_to_mlir.print_module(prog)
 
+        def _output_pyrdl(prog: ModuleOp, output: IOBase):
+            pyrdl_printer = PyRDLPrinter(stream=output)
+            pyrdl_printer.print_module(prog)
+
         self.available_targets['xdsl'] = _output_xdsl
         self.available_targets['irdl'] = _output_irdl
         self.available_targets['mlir'] = _output_mlir
+        self.available_targets['pyrdl'] = _output_pyrdl
 
     def setup_pipeline(self):
         """
