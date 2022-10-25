@@ -457,7 +457,8 @@ class Operation(Node):
             return
 
         if self.lhs.typ != self.rhs.typ or self.rhs.typ != self.result.typ:
-            raise VerifyException("expect all input and result types to be equal")
+            raise VerifyException(
+                "expect all input and result types to be equal")
 
     _OperationType = TypeVar('_OperationType', bound='Operation')
 
