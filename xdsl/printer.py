@@ -7,7 +7,7 @@ from typing import Iterable, TypeVar, Any, Dict, Optional, List, cast
 from dataclasses import dataclass, field
 from xdsl.dialects.memref import MemRefType
 from xdsl.ir import (BlockArgument, MLIRType, SSAValue, Block, Callable,
-                     Attribute, Region, Operation, Diagnostic)
+                     Attribute, Region, Operation, Diagnostic, Data)
 from xdsl.dialects.builtin import (
     AnyIntegerAttr, AnyFloatAttr, AnyUnrankedTensorType, AnyVectorType,
     DenseIntOrFPElementsAttr, Float16Type, Float32Type, Float64Type, FloatAttr,
@@ -15,7 +15,7 @@ from xdsl.dialects.builtin import (
     FlatSymbolRefAttr, IntegerAttr, ArrayAttr, ParametrizedAttribute, IntAttr,
     TensorType, UnitAttr, FunctionType, UnrankedTensorType, UnregisteredOp,
     VectorType)
-from xdsl.irdl import Data
+
 from enum import Enum
 
 indentNumSpaces = 2
