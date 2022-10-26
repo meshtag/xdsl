@@ -286,7 +286,7 @@ class Node(object):
             return False
         return cls.is_ancestor(op.parent)
 
-    def get_toplevel_object(cls: Node) -> Operation | Block | Region:
+    def get_toplevel_object(cls: Node) -> Node:
         """Get the operation, block, or region ancestor that has no parents."""
         if cls.parent is None:
             return cls
@@ -366,9 +366,6 @@ class Operation(Node):
 
         operation = op()
         if operands is not None:
-            for operand in operands:
-                assert isinstance(
-                    operand, SSAValue), "Operands must be of type SSAValue"
             operation.operands = operands
         if result_types is not None:
             operation.results = [
@@ -540,13 +537,6 @@ class BinaryOperation(Operation):
 
     # TODO replace with trait
     def verify_(self) -> None:
-        try:
-            assert self.lhs
-            assert self.rhs
-            assert self.result
-        except AttributeError:
-            return
-
         if self.lhs.typ != self.rhs.typ or self.rhs.typ != self.result.typ:
             raise VerifyException(
                 "expect all input and result types to be equal")
