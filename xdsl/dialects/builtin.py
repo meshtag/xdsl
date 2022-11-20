@@ -569,8 +569,9 @@ class DenseIntOrFPElementsAttr(ParametrizedAttribute):
         data: List[int | IntegerAttr[IntegerType]]
     ) -> DenseIntOrFPElementsAttr:
         attr_list = [
-            IntegerAttr.from_params(d, type.element_type) if isinstance(
-                d, int) else d for d in data
+            IntegerAttr.from_params(d, type.element_type) if isinstance(d, int)
+            else IntegerAttr.from_params(int(d), type.element_type)
+            for d in data
         ]
         return DenseIntOrFPElementsAttr([type, ArrayAttr.from_list(attr_list)])
 
@@ -580,8 +581,9 @@ class DenseIntOrFPElementsAttr(ParametrizedAttribute):
             type: VectorOrTensorOf[AnyFloat],
             data: List[float | AnyFloatAttr]) -> DenseIntOrFPElementsAttr:
         data_attr = [
-            FloatAttr.from_value(d, type.element_type)
-            if isinstance(d, float) else d for d in data
+            FloatAttr.from_value(d, type.element_type) if isinstance(d, float)
+            else FloatAttr.from_value(float(d), type.element_type)
+            for d in data
         ]
         return DenseIntOrFPElementsAttr([type, ArrayAttr.from_list(data_attr)])
 
