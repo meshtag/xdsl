@@ -24,3 +24,12 @@ add_op2 = AddVariadicOp2.build(operands=[[i32_ssa_var] * 2, [i32_ssa_var]], resu
                                attributes={"operand_segment_sizes": VectorType.from_type_and_list(i32, [2, 1])})
 print("Length of add_op2.ops1:", len(add_op2.ops1))
 print("Length of add_op2.ops2:", len(add_op2.ops2))
+
+# check_attribute = {"operand_segment_sizes_check": VectorType.from_type_and_list(i32, [4, 5])}
+# # printer.print(check_attribute)
+# # print(check_attribute[0].get_shape())
+# print(type(check_attribute))
+# print(len(check_attribute))
+# print(check_attribute.keys())
+# print(check_attribute["operand_segment_sizes_check"].get_shape())
+# print(type(check_attribute["operand_segment_sizes_check"]))

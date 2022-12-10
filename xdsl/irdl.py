@@ -316,6 +316,7 @@ class IRDLOption(ABC):
     ...
 
 
+# Should this class contain a verifier to solve the concerned issue?
 @dataclass
 class AttrSizedOperandSegments(IRDLOption):
     """Expect an attribute on the op that contains the sizes of the variadic operands."""
@@ -804,6 +805,9 @@ def irdl_op_builder(cls: type[_OpT], op_def: OpDef,
     # So we have a circular dependency that we solve by importing in this function.
     from xdsl.dialects.builtin import (DenseIntOrFPElementsAttr, i32)
 
+    print("I was here")
+    # print(attributes)
+
     error_prefix = f"Error in {op_def.name} builder: "
 
     # Build the operands
@@ -832,12 +836,40 @@ def irdl_op_builder(cls: type[_OpT], op_def: OpDef,
         built_attributes[attr_name] = irdl_build_attribute(
             attr_defs[attr_name].constr, attr)
 
+    print("I was here as well")
+
     # Take care of variadic operand and result segment sizes.
     if AttrSizedOperandSegments() in op_def.options:
         sizes = operand_sizes
         built_attributes[AttrSizedOperandSegments.attribute_name] =\
             DenseIntOrFPElementsAttr.vector_from_list(sizes, i32)
 
+        # print(sizes)
+        # if (attributes[AttrSizedOperandSegments.attribute_name].get_shape() != operand_sizes):
+        #     print("Size mismatch")
+        #     print(operand_sizes)
+
+        # print(attributes)
+        if (AttrSizedOperandSegments.attribute_name in attributes and attributes[AttrSizedOperandSegments.attribute_name].get_shape() != operand_sizes):
+            print("Size mismatch")
+
+        # print(AttrSizedOperandSegments.attribute_name)
+        # print(AttrSizedOperandSegments)
+        # print(sizes)
+        # print(attributes[AttrSizedOperandSegments.attribute_name].get_shape())
+        # print(built_attributes)
+        # print(built_attributes["operand_segment_sizes"], end="\n\n")
+        # print(built_attributes["operand_segment_sizes_check"], end="\n\n")
+        # print(built_attributes["a"], end="\n\n")
+
+    # expected_variadic_segment_sizes = attributes[AttrSizedOperandSegments.attribute_name].get_shape()
+    # for i in range(len(sizes)):
+    #     if (expected_variadic_segment_sizes[i] != sizes[i]):
+    #         print("Size_Mismatch")
+    #         print(expected_variadic_segment_sizes)
+    #         print(sizes)
+
+    # Similar technique to above one here as well.
     if AttrSizedResultSegments() in op_def.options:
         sizes = result_sizes
         built_attributes[AttrSizedResultSegments.attribute_name] =\
