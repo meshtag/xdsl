@@ -14,6 +14,7 @@ from xdsl.dialects.builtin import ModuleOp, Builtin
 from xdsl.dialects.cmath import CMath
 from xdsl.dialects.cf import Cf
 from xdsl.dialects.memref import MemRef
+from xdsl.dialects.vector import Vector
 from xdsl.dialects.llvm import LLVM
 from xdsl.dialects.irdl import IRDL
 
@@ -165,6 +166,7 @@ class xDSLOptMain:
         self.ctx.register_dialect(Func)
         self.ctx.register_dialect(Arith)
         self.ctx.register_dialect(MemRef)
+        self.ctx.register_dialect(Vector)
         self.ctx.register_dialect(Affine)
         self.ctx.register_dialect(Scf)
         self.ctx.register_dialect(Cf)
