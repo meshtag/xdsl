@@ -5,14 +5,21 @@ builtin.module() {
 func.func() ["sym_name" = "vector_test", "function_type" = !fun<[], []>, "sym_visibility" = "private"] {
     %0 : !index = arith.constant() ["value" = 0 : !index]
     %1 : !memref<[1 : !index], !index> = memref.alloca() ["alignment" = 0 : !i64, "operand_segment_sizes" = !dense<!vector<[2 : !index], !i32>, [0 : !i32, 0 : !i32]>]
-    %2 : !index = vector.load(%1 : !memref<[1 : !index], !index>, %0 : !index)
+    %2 : !vector<[1 : !index], !index> = vector.load(%1 : !memref<[1 : !index], !index>, %0 : !index)
+    vector.store(%2 : !vector<[1 : !index], !index>, %1 : !memref<[1 : !index], !index>, %0 : !index)
+    %3 : !vector<[1 : !index], !index> = vector.fma(%2 : !vector<[1 : !index], !index>, %2 : !vector<[1 : !index], !index>, %2 : !vector<[1 : !index], !index>)
+
+    memref.dealloc(%1 : !memref<[1 : !index], !index>)
     func.return()
   }
 
 // CHECK: func.func() ["sym_name" = "vector_test"
 // CHECK-NEXT:  %{{.*}} : !index = arith.constant() ["value" = 0 : !index]
 // CHECK-NEXT:  %{{.*}} : !memref<[1 : !index], !index> = memref.alloca() ["alignment" = 0 : !i64, "operand_segment_sizes" = !dense<!vector<[2 : !index], !i32>, [0 : !i32, 0 : !i32]>]
-// CHECK-NEXT:  %{{.*}} : !index = vector.load(%{{.*}} : !memref<[1 : !index], !index>, %{{.*}} : !index)
+// CHECK-NEXT:  %{{.*}} : !vector<[1 : !index], !index> = vector.load(%{{.*}} : !memref<[1 : !index], !index>, %{{.*}} : !index)
+// CHECK-NEXT:  vector.store(%{{.*}} : !vector<[1 : !index], !index>, %{{.*}} : !memref<[1 : !index], !index>, %{{.*}} : !index)
+// CHECK-NEXT:  %{{.*}} : !vector<[1 : !index], !index> = vector.fma(%{{.*}} : !vector<[1 : !index], !index>, %{{.*}} : !vector<[1 : !index], !index>, %{{.*}} : !vector<[1 : !index], !index>)
+// CHECK-NEXT:  memref.dealloc(%{{.*}} : !memref<[1 : !index], !index>)
 // CHECK-NEXT:  func.return()
 
 }
