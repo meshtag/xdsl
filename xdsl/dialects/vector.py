@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Annotated, TypeVar, Optional, List, TypeAlias
+from webbrowser import Opera
 
 from xdsl.dialects.builtin import (IntegerAttr, IndexType, ArrayAttr,
                                    IntegerType, FlatSymbolRefAttr, StringAttr,
@@ -85,4 +86,101 @@ class Fma(Operation):
             vector3: Operation | SSAValue) -> Fma:
         return Fma.build(operands=[vector1, vector2, vector3])
 
-Vector = Dialect([Load, Store, Fma], [])
+@irdl_op_definition
+class Broadcast(Operation):
+    name = "vector.broadcast"
+    value: Annotated[SSAValue, OperandDef(AnyAttr())] # Not allow multidimensional entities here
+    res: Annotated[OpResult, ResultDef(VectorType)]
+
+    # TODO varargs for indexing, which must match the vector dimensions
+    # Problem: vector dimensions require variadic type parameters,
+    # which is subject to change
+
+    # Add variable vector length parameter feature
+
+    def verify_(self):
+        # if self.res.typ.element_type != self.value.typ:
+        #     raise Exception(
+        #         "expected vector element type to match the value type")
+        a=1
+        # if self.memref.typ.get_num_dims() != len(self.indices):
+        #     raise Exception("expected an index for each dimension")
+
+    @staticmethod
+    def get(value: List[SSAValue | Operation]) -> Broadcast:
+        return Broadcast.build(operands=[value],
+                          result_types=[VectorType])
+
+@irdl_op_definition
+class Print(Operation):
+    name = "vector.print"
+    value: Annotated[SSAValue, OperandDef(VectorType)]
+
+    # TODO varargs for indexing, which must match the vector dimensions
+    # Problem: vector dimensions require variadic type parameters,
+    # which is subject to change
+
+    # Add variable vector length parameter feature
+
+    def verify_(self):
+        # if self.res.typ.element_type != self.value.typ:
+        #     raise Exception(
+        #         "expected vector element type to match the value type")
+        a = 1
+        # if self.memref.typ.get_num_dims() != len(self.indices):
+        #     raise Exception("expected an index for each dimension")
+
+    @staticmethod
+    def get(value: List[SSAValue | Operation]) -> Print:
+        return Print.build(operands=[value])
+
+@irdl_op_definition
+class Maskedload(Operation):
+    name = "vector.maskedload"
+    memref: Annotated[SSAValue, OperandDef(MemRefType)]
+    indices: Annotated[list[SSAValue], VarOperandDef(IndexType)]
+    mask_vector: Annotated[SSAValue, OperandDef(VectorType)]
+    passthrough_vector: Annotated[SSAValue, OperandDef(VectorType)]
+    res_vector: Annotated[OpResult, ResultDef(VectorType)]
+
+    # Add variable vector length parameter feature
+
+    def verify_(self):
+        # if self.memref.typ.element_type != self.value.typ:
+        #     raise Exception(
+        #         "Expected value type to match the MemRef element type")
+        a = 1
+        # if self.memref.typ.get_num_dims() != len(self.indices):
+        #     raise Exception("Expected an index for each dimension")
+
+    @staticmethod
+    def get(memref: Operation | SSAValue, indices: List[Operation | SSAValue], 
+            mask_vector: Operation | SSAValue, 
+            passthrough_vector: Operation | SSAValue) -> Maskedload:
+        return Maskedload.build(operands=[memref, indices, mask_vector, passthrough_vector])
+
+@irdl_op_definition
+class Maskedstore(Operation):
+    name = "vector.maskedstore"
+    memref: Annotated[SSAValue, OperandDef(MemRefType)]
+    indices: Annotated[list[SSAValue], VarOperandDef(IndexType)]
+    mask_vector: Annotated[SSAValue, OperandDef(VectorType)]
+    passthrough_vector: Annotated[SSAValue, OperandDef(VectorType)]
+
+    # Add variable vector length parameter feature
+
+    def verify_(self):
+        # if self.memref.typ.element_type != self.value.typ:
+        #     raise Exception(
+        #         "Expected value type to match the MemRef element type")
+        a = 1
+        # if self.memref.typ.get_num_dims() != len(self.indices):
+        #     raise Exception("Expected an index for each dimension")
+
+    @staticmethod
+    def get(memref: Operation | SSAValue, indices: List[Operation | SSAValue], 
+            mask_vector: Operation | SSAValue, 
+            passthrough_vector: Operation | SSAValue) -> Maskedstore:
+        return Maskedstore.build(operands=[memref, indices, mask_vector, passthrough_vector])
+
+Vector = Dialect([Load, Store, Fma, Broadcast, Print, Maskedload, Maskedstore], [])
