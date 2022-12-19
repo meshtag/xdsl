@@ -1,7 +1,7 @@
 from io import StringIO
 
 from xdsl.dialects.arith import Arith, Constant, Addi, Muli
-from xdsl.dialects.builtin import (Builtin, IntegerAttr, i32, i64, f32, f64,
+from xdsl.dialects.builtin import (Builtin, IntegerAttr, i32, i64, f32, f64, i1,
                                    ModuleOp)
 from xdsl.dialects.scf import Scf, If
 from xdsl.ir import MLContext, Region, Operation
@@ -50,6 +50,10 @@ def test_non_recursive_rewrite():
         def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter):
             if isinstance(op, Constant):
                 new_constant = Constant.from_int_and_width(43, i32)
+                # i1_constant = Constant.from_int_and_width(10, i1)
+                # i32_constant = Constant.from_int_and_width(10.2, i32)
+                # Printer.print_attribute(new_new_constant)
+                # print(new_new_constant)
                 rewriter.replace_matched_op([new_constant])
 
     rewrite_and_compare(
@@ -799,3 +803,5 @@ def test_move_region_contents_to_new_regions():
         prog, expected,
         PatternRewriteWalker(AnonymousRewritePattern(match_and_rewrite),
                              apply_recursively=False))
+
+test_non_recursive_rewrite()

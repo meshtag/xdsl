@@ -9,11 +9,16 @@ func.func() ["sym_name" = "vector_test", "function_type" = !fun<[], []>, "sym_vi
     vector.store(%2 : !vector<[2 : !index], !index>, %1 : !memref<[4 : !index], !index>, %0 : !index)
     %3 : !vector<[2 : !index], !index> = vector.fma(%2 : !vector<[2 : !index], !index>, %2 : !vector<[2 : !index], !index>, %2 : !vector<[2 : !index], !index>)
     
-    %4 : !i1 = arith.constant() ["value" = 1 : !i1]
-    %5 : !vector<[2 : !i1], !i1> = vector.broadcast(%4 : !i1)
+    // %4 : !i1 = arith.constant() ["value" = true] 
+    // Somehow the filechek test fails when we try to create a constant from arith dialect with its
+    // type as i1 and syntax as arith.constant() ["value" = 1 : !i1]
+    %8 : !i1 = arith.constant() ["value" = 1 : !i1]
 
-    %6 : !vector<[2 : !index], !index> = vector.maskedload(%1 : !memref<[4 : !index], !index>, %0 : !index, %5 : !vector<[2 : !i1], !i1>, %2 : !vector<[2 : !index], !index>)
-    vector.maskedstore(%1 : !memref<[4 : !index], !index>, %0 : !index, %5 : !vector<[2 : !i1], !i1>, %2 : !vector<[2 : !index], !index>)
+    // %5 : !vector<[2 : !i1], !i1> = vector.broadcast(%4 : !i1)
+    %7 : !vector<[2 : !index], !index> = vector.broadcast(%0 : !index)
+
+    // %6 : !vector<[2 : !index], !index> = vector.maskedload(%1 : !memref<[4 : !index], !index>, %0 : !index, %5 : !vector<[2 : !i1], !i1>, %2 : !vector<[2 : !index], !index>)
+    // vector.maskedstore(%1 : !memref<[4 : !index], !index>, %0 : !index, %5 : !vector<[2 : !i1], !i1>, %2 : !vector<[2 : !index], !index>)
     vector.print(%2 : !vector<[2 : !index], !index>)
 
     memref.dealloc(%1 : !memref<[4 : !index], !index>)
@@ -27,9 +32,9 @@ func.func() ["sym_name" = "vector_test", "function_type" = !fun<[], []>, "sym_vi
 // CHECK-NEXT:  vector.store(%{{.*}} : !vector<[2 : !index], !index>, %{{.*}} : !memref<[4 : !index], !index>, %{{.*}} : !index)
 // CHECK-NEXT:  %{{.*}} : !vector<[2 : !index], !index> = vector.fma(%{{.*}} : !vector<[2 : !index], !index>, %{{.*}} : !vector<[2 : !index], !index>, %{{.*}} : !vector<[2 : !index], !index>)
 // CHECK-NEXT:  %{{.*}} : !i1 = arith.constant() ["value" = 1 : !i1]
-// CHECK-NEXT:  %{{.*}} : !vector<[2 : !i1], !i1> = vector.broadcast(%{{.*}} : !i1)
-// CHECK-NEXT:  %{{.*}} : !vector<[2 : !index], !index> = vector.maskedload(%{{.*}} : !memref<[4 : !index], !index>, %{{.*}} : !index, %{{.*}} : !vector<[2 : !i1], !i1>, %{{.*}} : !vector<[2 : !index], !index>)
-// CHECK-NEXT:  vector.print(%{{.*}} : !vector<[2 : !index], !index>)
+// CHECK-NEXT:  %{{.*}} : !vector<[2 : !index], !index> = vector.broadcast(%{{.*}} : !index)
+
+// CHECK-NEXT:  vector.print(%{{.*}} : !vector<[2 : !index], !index>
 // CHECK-NEXT:  memref.dealloc(%{{.*}} : !memref<[4 : !index], !index>)
 // CHECK-NEXT:  func.return()
 

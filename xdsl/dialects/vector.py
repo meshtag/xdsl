@@ -30,9 +30,9 @@ class Load(Operation):
     # Add variable vector length parameter feature
 
     def verify_(self):
-        # if self.memref.typ.element_type != self.res.typ:
-        #     raise Exception(
-        #         "expected return type to match the Vector element type")
+        if self.memref.typ.element_type != self.res.typ.element_type:
+            raise Exception(
+                "expected return type to match the Vector element type")
 
         if self.memref.typ.get_num_dims() != len(self.indices):
             raise Exception("expected an index for each dimension")
@@ -53,9 +53,9 @@ class Store(Operation):
     # Add variable vector length parameter feature
 
     def verify_(self):
-        # if self.memref.typ.element_type != self.value.typ:
-        #     raise Exception(
-        #         "Expected value type to match the MemRef element type")
+        if self.memref.typ.element_type != self.vector.typ.element_type:
+            raise Exception(
+                "Expected value type to match the MemRef element type")
 
         if self.memref.typ.get_num_dims() != len(self.indices):
             raise Exception("Expected an index for each dimension")
@@ -99,10 +99,10 @@ class Broadcast(Operation):
     # Add variable vector length parameter feature
 
     def verify_(self):
-        # if self.res.typ.element_type != self.value.typ:
-        #     raise Exception(
-        #         "expected vector element type to match the value type")
-        a=1
+        if self.res.typ.element_type != self.value.typ:
+            raise Exception(
+                "expected vector element type to match the value type")
+        # a=1
         # if self.memref.typ.get_num_dims() != len(self.indices):
         #     raise Exception("expected an index for each dimension")
 
@@ -122,11 +122,11 @@ class Print(Operation):
 
     # Add variable vector length parameter feature
 
-    def verify_(self):
+    # def verify_(self):
         # if self.res.typ.element_type != self.value.typ:
         #     raise Exception(
         #         "expected vector element type to match the value type")
-        a = 1
+        # a = 1
         # if self.memref.typ.get_num_dims() != len(self.indices):
         #     raise Exception("expected an index for each dimension")
 
@@ -146,12 +146,12 @@ class Maskedload(Operation):
     # Add variable vector length parameter feature
 
     def verify_(self):
-        # if self.memref.typ.element_type != self.value.typ:
-        #     raise Exception(
-        #         "Expected value type to match the MemRef element type")
-        a = 1
-        # if self.memref.typ.get_num_dims() != len(self.indices):
-        #     raise Exception("Expected an index for each dimension")
+        if self.memref.typ.element_type != self.res_vector.typ.element_type:
+            raise Exception(
+                "Expected value type to match the MemRef element type")
+        # a = 1
+        if self.memref.typ.get_num_dims() != len(self.indices):
+            raise Exception("Expected an index for each dimension")
 
     @staticmethod
     def get(memref: Operation | SSAValue, indices: List[Operation | SSAValue], 
@@ -170,12 +170,12 @@ class Maskedstore(Operation):
     # Add variable vector length parameter feature
 
     def verify_(self):
-        # if self.memref.typ.element_type != self.value.typ:
-        #     raise Exception(
-        #         "Expected value type to match the MemRef element type")
-        a = 1
-        # if self.memref.typ.get_num_dims() != len(self.indices):
-        #     raise Exception("Expected an index for each dimension")
+        if self.memref.typ.element_type != self.passthrough_vector.typ.element_type:
+            raise Exception(
+                "Expected value type to match the MemRef element type")
+        # a = 1
+        if self.memref.typ.get_num_dims() != len(self.indices):
+            raise Exception("Expected an index for each dimension")
 
     @staticmethod
     def get(memref: Operation | SSAValue, indices: List[Operation | SSAValue], 
