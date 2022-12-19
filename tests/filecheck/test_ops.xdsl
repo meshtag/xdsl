@@ -1,0 +1,17 @@
+// RUN: xdsl-opt %s | xdsl-opt | filecheck %s
+
+builtin.module() {
+
+func.func() ["sym_name" = "i1_test", "function_type" = !fun<[], []>, "sym_visibility" = "private"] {
+    %0 : !index = arith.constant() ["value" = 10 : !index]
+    %1 : !i1 = arith.constant() ["value" = 1 : !i1]
+
+    func.return()
+  }
+
+
+// CHECK:  %{{.*}} : !index = arith.constant() ["value" = 10 : !index]
+// CHECK-NEXT:  %{{.*}} : !i1 = arith.constant() ["value" = true]
+// CHECK-NEXT:  func.return()
+
+}
