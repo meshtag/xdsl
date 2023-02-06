@@ -63,7 +63,7 @@ jobs:
 
     - name: Install the package locally
       run:
-        cd .. && pip install -e .[extras]
+        pip install -e .[extras]
 
     - name: MLIR Build Setup
       run: |
