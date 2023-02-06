@@ -62,7 +62,7 @@ jobs:
         pip install --upgrade pip
 
     - name: Install the package locally
-      run: pip install -e .[extras]
+      run: cd xdsl && pip install -e .[extras]
 
     - name: MLIR Build Setup
       run: |
