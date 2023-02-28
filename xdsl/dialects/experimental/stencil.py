@@ -226,8 +226,8 @@ class Load(Operation):
     """
     name: str = "stencil.load"
     field: Annotated[Operand, FieldType]
-    lb: OptOpAttr[Stencil_Index]
-    ub: OptOpAttr[Stencil_Index]
+        lb: OptOpAttr[Stencil_Index]
+        ub: OptOpAttr[Stencil_Index]
     res: Annotated[OpResult, TempType]
 
 
