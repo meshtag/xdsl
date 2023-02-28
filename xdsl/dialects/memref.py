@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated, TypeVar, Optional, List, TypeAlias, cast
 
-from xdsl.dialects.builtin import (DenseIntOrFPElementsAttr, IntegerAttr,
+from xdsl.dialects.builtin import (AnyArrayAttr, DenseIntOrFPElementsAttr, IntegerAttr,
                                    IndexType, ArrayAttr, IntegerType,
                                    SymbolRefAttr, StringAttr, UnitAttr)
 from xdsl.ir import (MLIRType, Operation, SSAValue, ParametrizedAttribute,
@@ -317,6 +317,23 @@ class ExtractAlignedPointerAsIndexOp(Operation):
         return ExtractAlignedPointerAsIndexOp.build(operands=[source],
                                                     result_types=[IndexType()])
 
+@irdl_op_definition
+class Subview(Operation):
+    name = "memref.subview"
+
+    source: Annotated[Operand, MemRefType]
+    offsets: Annotated[VarOperand, IndexType]
+    sizes: Annotated[VarOperand, IndexType]
+    strides: Annotated[VarOperand, IndexType]
+    # static_offsets: OpAttr[ArrayAttr[DenseIntOrFPElementsAttr]]
+    static_offsets: OpAttr[AnyArrayAttr]
+    static_sizes: OpAttr[AnyArrayAttr]
+    static_strides: OpAttr[AnyArrayAttr]
+    # static_sizes: OpAttr[ArrayAttr[DenseIntOrFPElementsAttr]]
+    # static_strides: OpAttr[ArrayAttr[DenseIntOrFPElementsAttr]]
+    result: Annotated[OpResult, MemRefType]
+
+    irdl_options = [AttrSizedOperandSegments()]
 
 MemRef = Dialect([
     Load,
@@ -328,4 +345,5 @@ MemRef = Dialect([
     Global,
     Dim,
     ExtractAlignedPointerAsIndexOp,
+    Subview,
 ], [MemRefType, UnrankedMemrefType])
