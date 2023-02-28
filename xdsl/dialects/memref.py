@@ -1,8 +1,9 @@
 from __future__ import annotations
+from optparse import Option
 
 from typing import Annotated, TypeVar, Optional, List, TypeAlias, cast
 
-from xdsl.dialects.builtin import (AnyArrayAttr, DenseIntOrFPElementsAttr, IntegerAttr,
+from xdsl.dialects.builtin import (AnyArrayAttr, DenseArrayBase, DenseIntOrFPElementsAttr, IntegerAttr,
                                    IndexType, ArrayAttr, IntegerType,
                                    SymbolRefAttr, StringAttr, UnitAttr)
 from xdsl.ir import (MLIRType, Operation, SSAValue, ParametrizedAttribute,
@@ -325,12 +326,9 @@ class Subview(Operation):
     offsets: Annotated[VarOperand, IndexType]
     sizes: Annotated[VarOperand, IndexType]
     strides: Annotated[VarOperand, IndexType]
-    # static_offsets: OpAttr[ArrayAttr[DenseIntOrFPElementsAttr]]
-    static_offsets: OpAttr[AnyArrayAttr]
-    static_sizes: OpAttr[AnyArrayAttr]
-    static_strides: OpAttr[AnyArrayAttr]
-    # static_sizes: OpAttr[ArrayAttr[DenseIntOrFPElementsAttr]]
-    # static_strides: OpAttr[ArrayAttr[DenseIntOrFPElementsAttr]]
+    static_offsets: OpAttr[DenseArrayBase]
+    static_sizes: OpAttr[DenseArrayBase]
+    static_strides: OpAttr[DenseArrayBase]
     result: Annotated[OpResult, MemRefType]
 
     irdl_options = [AttrSizedOperandSegments()]
