@@ -10,6 +10,7 @@
     %5 = "memref.alloc"() {"alignment" = 0 : i64, "operand_segment_sizes" = array<i32: 0, 0>} : () -> memref<10x2xindex>
     "memref.store"(%3, %5, %3, %4) : (index, memref<10x2xindex>, index, index) -> ()
     %6 = "memref.subview"(%5) {"operand_segment_sizes" = array<i32: 1, 0, 0, 0>, "static_offsets" = array<i64: 0, 0>, "static_sizes" = array<i64: 1, 1>, "static_strides" = array<i64: 1, 1>} : (memref<10x2xindex>) -> memref<1x1xindex>
+    %7 = "memref.cast"(%5) : (memref<10x2xindex>) -> memref<?x2xindex>
     "memref.dealloc"(%2) : (memref<1xindex>) -> ()
     "memref.dealloc"(%5) : (memref<10x2xindex>) -> ()
     "func.return"() : () -> ()

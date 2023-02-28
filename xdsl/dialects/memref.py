@@ -333,6 +333,14 @@ class Subview(Operation):
 
     irdl_options = [AttrSizedOperandSegments()]
 
+
+@irdl_op_definition
+class Cast(Operation):
+    name = "memref.cast"
+
+    source: Annotated[Operand, MemRefType]
+    dest: Annotated[OpResult, MemRefType]
+
 MemRef = Dialect([
     Load,
     Store,
@@ -344,4 +352,5 @@ MemRef = Dialect([
     Dim,
     ExtractAlignedPointerAsIndexOp,
     Subview,
+    Cast,
 ], [MemRefType, UnrankedMemrefType])
