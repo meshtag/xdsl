@@ -240,6 +240,7 @@ def test_memref_cast():
     i32_memref_type = MemRefType.from_element_type_and_shape(i32, [10, 2])
     memref_ssa_value = OpResult(i32_memref_type, [], [])
 
+    # This is not supposed to be tested like this.
     res_type = MemRefType.from_element_type_and_shape(i32, [5, 2, 2])
 
     cast = Cast.build(operands=[memref_ssa_value], result_types=[res_type])
