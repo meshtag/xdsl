@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import cast, Any
+from typing import Annotated, TypeVar, Any, cast
 
-from xdsl.dialects.builtin import (ParametrizedAttribute, ArrayAttr, f32, f64,
+from xdsl.dialects.builtin import (AnyIntegerAttr, ParametrizedAttribute, ArrayAttr, f32, f64,
                                    IntegerType, IndexType, IntAttr, AnyFloat)
 from xdsl.ir import Operation, Dialect, MLIRType
 from xdsl.irdl import (irdl_attr_definition, irdl_op_definition, ParameterDef,
-                       AttrConstraint, Attribute, Region, VerifyException,
+                       AttrConstraint, Attribute, Region, VerifyException, Generic,
                        AnyOf, Annotated, Operand, OpAttr, OpResult, VarOperand,
                        VarOpResult, OptOpAttr, AttrSizedOperandSegments)
 
@@ -27,12 +27,14 @@ class IntOrUnknown(AttrConstraint):
                 f"Expected array of length {self.length}, got {len(attr.data)}."
             )
 
+_FieldTypeElement = TypeVar("_FieldTypeElement", bound=Attribute)
 
 @irdl_attr_definition
-class FieldType(ParametrizedAttribute, MLIRType):
+class FieldType(Generic[_FieldTypeElement], ParametrizedAttribute, MLIRType):
     name = "stencil.field"
 
-    shape: ParameterDef[ArrayAttr[IntAttr]]
+    shape: ParameterDef[ArrayAttr[AnyIntegerAttr]]
+    element_type: ParameterDef[_FieldTypeElement]
 
     @staticmethod
     def from_shape(shape: list[int] | list[IntAttr]) -> FieldType:
@@ -47,10 +49,11 @@ class FieldType(ParametrizedAttribute, MLIRType):
 
 
 @irdl_attr_definition
-class TempType(ParametrizedAttribute, MLIRType):
+class TempType(Generic[_FieldTypeElement], ParametrizedAttribute, MLIRType):
     name = "stencil.temp"
 
-    shape: ParameterDef[ArrayAttr[IntAttr]]
+    shape: ParameterDef[ArrayAttr[AnyIntegerAttr]]
+    element_type: ParameterDef[_FieldTypeElement]
 
     @staticmethod
     def from_shape(
@@ -114,7 +117,7 @@ class Stencil_Element(ParametrizedAttribute):
 class Stencil_Index(ParametrizedAttribute):
     # TODO: can you have an attr and an op with the same name?
     name = "stencil.index"
-    shape = Annotated[ArrayAttr[IntAttr], ArrayLength(2)]
+    shape = Annotated[ArrayAttr[AnyIntegerAttr], ArrayLength(2)]
 
 
 @dataclass(frozen=True)
@@ -193,7 +196,7 @@ class Access(Operation):
     """
     name: str = "stencil.access"
     temp: Annotated[Operand, TempType]
-    offset: OpAttr[ArrayAttr[IntAttr]]
+    offset: OpAttr[Stencil_Index]
     res: Annotated[OpResult, Attribute]
 
 
@@ -274,11 +277,11 @@ class Apply(Operation):
       }
     """
     name: str = "stencil.apply"
-    args: Annotated[VarOperand, FieldType]
+    args: Annotated[VarOperand, TempType]
     lb: OptOpAttr[Stencil_Index]
     ub: OptOpAttr[Stencil_Index]
     region: Region
-    res: Annotated[VarOpResult, FieldType]
+    res: Annotated[VarOpResult, TempType]
 
 
 @irdl_op_definition
@@ -336,8 +339,8 @@ class Combine(Operation):
     lower_ext: Annotated[VarOperand, TempType]
     upper_ext: Annotated[VarOperand, TempType]
 
-    lb = OptOpAttr[Stencil_Index]
-    ub = OptOpAttr[Stencil_Index]
+    # lb = OptOpAttr[Stencil_Index]
+    # ub = OptOpAttr[Stencil_Index]
 
     region: Region
     res: VarOpResult
@@ -345,7 +348,7 @@ class Combine(Operation):
     irdl_options = [AttrSizedOperandSegments()]
 
 
-Dialect([
+Stencil = Dialect([
     Cast,
     External_Load,
     External_Store,
