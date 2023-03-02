@@ -1,0 +1,19 @@
+-1
+
+-1
+
+builtin.module() {
+  func.func() ["sym_name" = "stencil_test", "function_type" = !fun<[!stencil.field<[-1 : !i32, -1 : !i32, -1 : !i32], !f64>, !stencil.field<[-1 : !i32, -1 : !i32, -1 : !i32], !f64>], []>, "sym_visibility" = "private"] {
+  ^0(%0 : !stencil.field<[-1 : !i32, -1 : !i32, -1 : !i32], !f64>, %1 : !stencil.field<[-1 : !i32, -1 : !i32, -1 : !i32], !f64>):
+    %2 : !memref<[72 : !index, 72 : !index, 72 : !index], !f64> = memref.cast(%<UNKNOWN> : !memref<[-1 : !index, -1 : !index, -1 : !index], !f64>)
+    --------------------------------------------------------------------------^^^^^^^^^^-------------
+    | ERROR: SSAValue is not part of the IR, are you sure all operations are added before their uses?
+    -------------------------------------------------------------------------------------------------
+    %3 : !memref<[72 : !index, 72 : !index, 72 : !index], !f64> = memref.cast(%<UNKNOWN> : !memref<[-1 : !index, -1 : !index, -1 : !index], !f64>)
+    --------------------------------------------------------------------------^^^^^^^^^^-------------
+    | ERROR: SSAValue is not part of the IR, are you sure all operations are added before their uses?
+    -------------------------------------------------------------------------------------------------
+    func.return()
+  }
+}
+

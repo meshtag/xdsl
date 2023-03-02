@@ -320,7 +320,7 @@ class ExtractAlignedPointerAsIndexOp(Operation):
 
 
 @irdl_op_definition
-class Subview(Operation):
+class MemRefSubview(Operation):
     name = "memref.subview"
 
     source: Annotated[Operand, MemRefType]
@@ -336,7 +336,7 @@ class Subview(Operation):
 
 
 @irdl_op_definition
-class Cast(Operation):
+class MemRefCast(Operation):
     name = "memref.cast"
 
     source: Annotated[Operand, MemRefType]
@@ -353,6 +353,6 @@ MemRef = Dialect([
     Global,
     Dim,
     ExtractAlignedPointerAsIndexOp,
-    Subview,
-    Cast,
+    MemRefSubview,
+    MemRefCast,
 ], [MemRefType, UnrankedMemrefType])
