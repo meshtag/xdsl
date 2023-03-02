@@ -11,26 +11,13 @@ class CastOpLowering(RewritePattern):
 
     def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter, /):
         if (isinstance(op, Cast)):
-            # print(op.lb.parameters[0].data[0].value.data)
-            # print(op.lb.parameters[0].data[1].value.data)
-            # print(op.result.typ.element_type)
-            # print(type(op.result.typ.element_type))
-            # print(type(op.lb.parameters[0].data[0].value.data))
             size_dim1 = abs(op.lb.parameters[0].data[0].value.data) + abs(
                 op.ub.parameters[0].data[0].value.data)
             size_dim2 = abs(op.lb.parameters[0].data[1].value.data) + abs(
                 op.ub.parameters[0].data[1].value.data)
             size_dim3 = abs(op.lb.parameters[0].data[2].value.data) + abs(
                 op.ub.parameters[0].data[2].value.data)
-            # print(size_dim1)
-            # print(size_dim2)
-            # print(size_dim3)
 
-            # print(op.field)
-            print(op.field.typ.shape.data[0].value.data)
-
-            # check_typ = MemRefType.from_element_type_and_shape(op.field.typ.element_type, [size_dim1, size_dim2, size_dim3])
-            # print(check_typ)
             dynamic_dim_memref_type = MemRefType.from_element_type_and_shape(
                 op.field.typ.element_type, [
                     op.field.typ.shape.data[0].value.data,
@@ -47,7 +34,6 @@ class CastOpLowering(RewritePattern):
                 operands=[dynamic_dim_memref_ssa_val],
                 result_types=[res_memref_type])
 
-            # print(memref_cast)
             rewriter.replace_matched_op([memref_cast])
 
             print()
