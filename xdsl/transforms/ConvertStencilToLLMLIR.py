@@ -19,32 +19,11 @@ def GetMemRefFromField(inputFieldType : FieldType) -> MemRefType:
 class StencilTypeConversionLowering(RewritePattern):
 
     def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter, /):
-        # print(op.sym_name)
-        # print(op)
-        # print(type(op))
-        # print("\n\n\n\n")
-
         if (isinstance(op, FuncOp)):
             for i in range(len(op.body.blocks[0].args)):
                 memref_type_equiv = GetMemRefFromField(op.function_type.parameters[0].data[i])
                 rewriter.modify_block_argument_type(op.body.blocks[0].args[i], memref_type_equiv)
                 op.function_type.parameters[0].data[i] = memref_type_equiv
-
-
-        # for i in range(len(op.operands)):
-        #     # print(isinstance(op.operands[i].typ, FieldType))
-        #     if (isinstance(op.operands[i].typ, FieldType)):
-        #         memref_shape = []
-        #         # print(len(op.operands[i].typ.parameters[0].data))
-        #         for j in range(len(op.operands[i].typ.parameters[0].data)):
-        #             memref_shape.append(
-        #                 op.operands[i].typ.parameters[0].data[j].value.data)
-        #         memref_type = MemRefType.from_element_type_and_shape(
-        #             op.operands[i].typ.element_type, memref_shape)
-        #         # print(memref_type)
-        #         rewriter.modify_block_argument_type(op, memref_type)
-
-        # print("\n\n\n")
 
 
 class CastOpLowering(RewritePattern):
@@ -58,28 +37,31 @@ class CastOpLowering(RewritePattern):
             size_dim3 = abs(op.lb.parameters[0].data[2].value.data) + abs(
                 op.ub.parameters[0].data[2].value.data)
 
-            dynamic_dim_memref_type = MemRefType.from_element_type_and_shape(
-                op.field.typ.element_type, [
-                    op.field.typ.shape.data[0].value.data,
-                    op.field.typ.shape.data[1].value.data,
-                    op.field.typ.shape.data[2].value.data
-                ])
-            dynamic_dim_memref_ssa_val = OpResult(dynamic_dim_memref_type, [],
-                                                  [])
-
             res_memref_type = MemRefType.from_element_type_and_shape(
                 op.result.typ.element_type, [size_dim1, size_dim2, size_dim3])
 
-            memref_cast = MemRefCast.build(
-                operands=[dynamic_dim_memref_ssa_val],
-                result_types=[res_memref_type])
+            dynamic_dim_memref_type = GetMemRefFromField(op.field.typ)
+            dynamic_dim_memref = OpResult(dynamic_dim_memref_type, [], [])
 
-            rewriter.replace_matched_op([memref_cast])
+            memref_cast = MemRefCast.build(
+                operands=[dynamic_dim_memref],
+                result_types=[res_memref_type])
+            print(memref_cast)
+            print("\n")
+            print(op.field)
+            print("\n")
+            print(op.result)
+            print("\n\n\n")
+
+            # op.field = GetMemRefFromField(op.field.typ)
+
+            # rewriter.replace_op(op, memref_cast)
 
 
 def ConvertStencilToLLMLIRPass(ctx: MLContext, module: ModuleOp):
     walker = PatternRewriteWalker(GreedyRewritePatternApplier(
-        [StencilTypeConversionLowering()]),
+        [ 
+         CastOpLowering()]),
                                   walk_regions_first=True,
                                   apply_recursively=False,
                                   walk_reverse=True)
