@@ -19,6 +19,8 @@ from xdsl.dialects.llvm import LLVM
 from xdsl.dialects.irdl import IRDL
 from xdsl.dialects.gpu import GPU
 
+from xdsl.dialects.experimental.stencil import Stencil
+
 from xdsl.irdl_mlir_printer import IRDLPrinter
 from xdsl.utils.exceptions import DiagnosticException
 
@@ -188,6 +190,7 @@ class xDSLOptMain:
         self.ctx.register_dialect(LLVM)
         self.ctx.register_dialect(Vector)
         self.ctx.register_dialect(GPU)
+        self.ctx.register_dialect(Stencil)
 
     def register_all_frontends(self):
         """
