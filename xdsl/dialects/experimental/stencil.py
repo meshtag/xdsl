@@ -339,8 +339,8 @@ class Combine(Operation):
     lower_ext: Annotated[VarOperand, TempType]
     upper_ext: Annotated[VarOperand, TempType]
 
-    # lb = OptOpAttr[Stencil_Index]
-    # ub = OptOpAttr[Stencil_Index]
+    lb: OptOpAttr[Stencil_Index]
+    ub: OptOpAttr[Stencil_Index]
 
     region: Region
     res: VarOpResult
