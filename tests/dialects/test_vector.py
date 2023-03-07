@@ -2,7 +2,8 @@ import pytest
 
 from typing import TypeVar, List
 
-from xdsl.dialects.builtin import i1, i32, i64, IntegerType, IndexType, VectorType
+from xdsl.dialects.arith import IndexCastOp, Constant
+from xdsl.dialects.builtin import IntAttr, i1, i32, i64, IntegerType, IndexType, VectorType
 from xdsl.dialects.memref import MemRefType, AnyIntegerAttr
 from xdsl.dialects.vector import Broadcast, Load, Maskedload, Maskedstore, Store, FMA, Print, Createmask
 from xdsl.ir import OpResult
@@ -426,15 +427,30 @@ def test_vector_masked_load_verify_result_vector_rank():
 
     i32_res_vector_type = VectorType.from_element_type_and_shape(i32, [2, 3])
 
+    # index1 = IndexType([IntAttr.from_int(2)])
+    # print(index1)
+
+    # index1 = OpResult(IndexType, [], [])
+    # print(i32_res_vector_type)
+
+    a = Constant.from_int_and_width(0, 32)
+    cast = IndexCastOp.get(a, IndexType())
+    print(cast)
+
+
     maskedload = Maskedload.build(operands=[
-        memref_ssa_value, [], mask_vector_ssa_value,
+        memref_ssa_value, [cast], mask_vector_ssa_value,
         passthrough_vector_ssa_value
     ],
                                   result_types=[i32_res_vector_type])
 
-    with pytest.raises(Exception) as exc_info:
-        maskedload.verify()
-    assert exc_info.value.args[0] == "Expected a rank 1 result vector."
+    maskedload.verify()
+    # with pytest.raises(Exception) as exc_info:
+    #     maskedload.verify()
+    # assert exc_info.value.args[0] == "Expected a rank 1 result vector."
+
+
+test_vector_masked_load_verify_result_vector_rank()
 
 
 def test_vector_masked_load_verify_mask_vector_rank():

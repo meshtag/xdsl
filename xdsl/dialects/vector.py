@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Annotated, List, cast
 
-from xdsl.dialects.builtin import IndexType, VectorType, i1
+from xdsl.dialects.builtin import IndexType, VectorType, i1, VectorBaseTypeConstraint, VectorRankConstraint, VectorBaseTypeAndRankConstraint
 from xdsl.dialects.memref import MemRefType
 from xdsl.ir import Attribute, Operation, SSAValue, Dialect, OpResult
 from xdsl.irdl import AnyAttr, irdl_op_definition, Operand, VarOperand
@@ -155,7 +155,7 @@ class Maskedload(Operation):
     indices: Annotated[VarOperand, IndexType]
     mask: Annotated[Operand, VectorType]
     passthrough: Annotated[Operand, VectorType]
-    res: Annotated[OpResult, VectorType]
+    res: Annotated[OpResult, VectorRankConstraint(1)]
 
     def verify_(self):
         memref_element_type = self.memref.typ.element_type
@@ -168,9 +168,6 @@ class Maskedload(Operation):
             raise VerifyException(
                 "MemRef element type should match the result vector and passthrough vector element type. Found different element types for memref and passthrough."
             )
-
-        if len(self.res.typ.get_shape()) != 1:
-            raise VerifyException("Expected a rank 1 result vector.")
 
         if len(self.mask.typ.get_shape()) != 1:
             raise VerifyException("Expected a rank 1 mask vector.")
