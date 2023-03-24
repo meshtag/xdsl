@@ -20,6 +20,11 @@
       %16 = "arith.mulf"(%11, %15) : (f64, f64) -> f64
       %17 = "arith.mulf"(%16, %13) : (f64, f64) -> f64
       "stencil.return"(%17) : (!stencil.result<f64>) -> ()
+
+      // %check_return = "arith.constant"() {"value" = -5.000000e+00 : f64} : () -> f64
+      // "stencil.return"(%check_return) : (!stencil.result<f64>) -> ()
+      // %check_return_res = stencil.store_result %check_return : (f64) -> !stencil.result<f64>
+
     }) : (!stencil.temp<[66 : i32, 66 : i32], f64>) -> !stencil.temp<[64 : i32, 64 : i32], f64>
     "stencil.store"(%5, %3) {"lb" = #stencil.index<[0 : i32, 0 : i32]>, "ub" = #stencil.index<[64 : i32, 64 : i32]>} : (!stencil.temp<[64 : i32, 64 : i32], f64>, !stencil.field<[72 : i32, 72 : i32], f64>) -> ()
     "func.return"() : () -> ()

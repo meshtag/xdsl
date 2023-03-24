@@ -346,11 +346,15 @@ class AccessOpToMemref(RewritePattern):
         assert isinstance(load.lb, IndexAttr)
         assert isinstance(load.field.owner, CastOp)
         memref_offset = (op.offset - load.field.owner.lb).array.data
+        # memref_offset = op.offset.array.data
         off_const_ops = [
             arith.Constant.from_int_and_width(x.value.data,
                                               builtin.IndexType())
             for x in memref_offset
         ]
+
+        # print(op.offset)
+        # print(load.field.owner.lb)
 
         off_sum_ops = [
             arith.Addi.get(i, x) for i, x in zip(block.args, off_const_ops)
