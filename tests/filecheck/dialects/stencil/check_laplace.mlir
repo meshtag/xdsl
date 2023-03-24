@@ -40,45 +40,46 @@
   }
 
   func.func @laplace_xdsl(%arg0: memref<?x?x?xf64>, %arg1: memref<?x?x?xf64>) attributes {stencil.program} {
-    %cst = arith.constant -4.000000e+00 : f64
-    %c5 = arith.constant 5 : index
-    %c4 = arith.constant 4 : index
-    %c3 = arith.constant 3 : index
-    %c64 = arith.constant 64 : index
-    %c1 = arith.constant 1 : index
-    %c0 = arith.constant 0 : index
-    scf.parallel (%arg2, %arg3, %arg4) = (%c0, %c0, %c0) to (%c64, %c64, %c64) step (%c1, %c1, %c1) {
-      %0 = arith.addi %arg2, %c3 : index
-      %1 = arith.addi %arg3, %c4 : index
-      %2 = arith.addi %arg4, %c4 : index
-      %3 = memref.load %arg0[%0, %1, %2] : memref<?x?x?xf64>
-      %4 = arith.addi %arg2, %c5 : index
-      %5 = arith.addi %arg3, %c4 : index
-      %6 = arith.addi %arg4, %c4 : index
-      %7 = memref.load %arg0[%4, %5, %6] : memref<?x?x?xf64>
-      %8 = arith.addi %arg2, %c4 : index
-      %9 = arith.addi %arg3, %c5 : index
-      %10 = arith.addi %arg4, %c4 : index
-      %11 = memref.load %arg0[%8, %9, %10] : memref<?x?x?xf64>
-      %12 = arith.addi %arg2, %c4 : index
-      %13 = arith.addi %arg3, %c3 : index
-      %14 = arith.addi %arg4, %c4 : index
-      %15 = memref.load %arg0[%12, %13, %14] : memref<?x?x?xf64>
-      %16 = arith.addi %arg2, %c4 : index
-      %17 = arith.addi %arg3, %c4 : index
-      %18 = arith.addi %arg4, %c4 : index
-      %19 = memref.load %arg0[%16, %17, %18] : memref<?x?x?xf64>
-      %20 = arith.addf %3, %7 : f64
-      %21 = arith.addf %11, %15 : f64
-      %22 = arith.addf %20, %21 : f64
-      %23 = arith.mulf %19, %cst : f64
-      %24 = arith.addf %23, %22 : f64
-      %25 = arith.addi %arg2, %c4 : index
-      %26 = arith.addi %arg3, %c4 : index
-      %27 = arith.addi %arg4, %c4 : index
-      memref.store %24, %arg1[%25, %26, %27] : memref<?x?x?xf64>
-      scf.yield
-    }
+    %0 = "arith.constant"() {value = -4.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 5 : index} : () -> index
+    %2 = "arith.constant"() {value = 3 : index} : () -> index
+    %3 = "arith.constant"() {value = 4 : index} : () -> index
+    %4 = "arith.constant"() {value = 64 : index} : () -> index
+    %5 = "arith.constant"() {value = 1 : index} : () -> index
+    %6 = "arith.constant"() {value = 0 : index} : () -> index
+    "scf.parallel"(%6, %6, %6, %4, %4, %4, %5, %5, %5) ({
+    ^bb0(%arg2: index, %arg3: index, %arg4: index):
+      %7 = "arith.addi"(%arg4, %3) : (index, index) -> index
+      %8 = "arith.addi"(%arg3, %3) : (index, index) -> index
+      %9 = "arith.addi"(%arg2, %2) : (index, index) -> index
+      %10 = "memref.load"(%arg0, %7, %8, %9) : (memref<?x?x?xf64>, index, index, index) -> f64
+      %11 = "arith.addi"(%arg4, %3) : (index, index) -> index
+      %12 = "arith.addi"(%arg3, %3) : (index, index) -> index
+      %13 = "arith.addi"(%arg2, %1) : (index, index) -> index
+      %14 = "memref.load"(%arg0, %11, %12, %13) : (memref<?x?x?xf64>, index, index, index) -> f64
+      %15 = "arith.addi"(%arg4, %3) : (index, index) -> index
+      %16 = "arith.addi"(%arg3, %1) : (index, index) -> index
+      %17 = "arith.addi"(%arg2, %3) : (index, index) -> index
+      %18 = "memref.load"(%arg0, %15, %16, %17) : (memref<?x?x?xf64>, index, index, index) -> f64
+      %19 = "arith.addi"(%arg4, %3) : (index, index) -> index
+      %20 = "arith.addi"(%arg3, %2) : (index, index) -> index
+      %21 = "arith.addi"(%arg2, %3) : (index, index) -> index
+      %22 = "memref.load"(%arg0, %19, %20, %21) : (memref<?x?x?xf64>, index, index, index) -> f64
+      %23 = "arith.addi"(%arg4, %3) : (index, index) -> index
+      %24 = "arith.addi"(%arg3, %3) : (index, index) -> index
+      %25 = "arith.addi"(%arg2, %3) : (index, index) -> index
+      %26 = "memref.load"(%arg0, %23, %24, %25) : (memref<?x?x?xf64>, index, index, index) -> f64
+      %27 = "arith.addf"(%10, %14) {fastmath = #arith.fastmath<none>} : (f64, f64) -> f64
+      %28 = "arith.addf"(%18, %22) {fastmath = #arith.fastmath<none>} : (f64, f64) -> f64
+      %29 = "arith.addf"(%27, %28) {fastmath = #arith.fastmath<none>} : (f64, f64) -> f64
+      %30 = "arith.mulf"(%26, %0) {fastmath = #arith.fastmath<none>} : (f64, f64) -> f64
+      %31 = "arith.addf"(%30, %29) {fastmath = #arith.fastmath<none>} : (f64, f64) -> f64
+      %32 = "arith.addi"(%arg4, %3) : (index, index) -> index
+      %33 = "arith.addi"(%arg3, %3) : (index, index) -> index
+      %34 = "arith.addi"(%arg2, %3) : (index, index) -> index
+      "memref.store"(%31, %arg1, %32, %33, %34) : (f64, memref<?x?x?xf64>, index, index, index) -> ()
+      "scf.yield"() : () -> ()
+    }) {operand_segment_sizes = array<i32: 3, 3, 3, 0>} : (index, index, index, index, index, index, index, index, index) -> ()
     return
   }
 
@@ -107,9 +108,11 @@
           %val2 = memref.load %memref2[%i, %j, %k] : memref<?x?x?xf64>
 
           %check_val = arith.cmpf one, %val1, %val2 : f64
+          %check_diff = arith.subf %val1, %val2 : f64
           scf.if %check_val {
             %c404 = arith.constant 404 : index
-            vector.print %c404 : index
+            // vector.print %c404 : index
+            vector.print %check_diff : f64
           } 
         }
       }
@@ -120,9 +123,9 @@
   }
 
   "func.func"() ({
-    %memref1_size1 = "arith.constant"() {"value" = 100 : index} : () -> index
-    %memref1_size2 = "arith.constant"() {"value" = 100 : index} : () -> index
-    %memref1_size3 = "arith.constant"() {"value" = 100 : index} : () -> index
+    %memref1_size1 = "arith.constant"() {"value" = 72 : index} : () -> index
+    %memref1_size2 = "arith.constant"() {"value" = 72 : index} : () -> index
+    %memref1_size3 = "arith.constant"() {"value" = 72 : index} : () -> index
     %memref1_elem = "arith.constant"() {"value" = 7.0 : f64} : () -> f64
     %memref1 = func.call @alloc_3d_filled_f64(%memref1_size1, %memref1_size2, %memref1_size3, %memref1_elem) : (index, index, index, f64) -> memref<?x?x?xf64>
 
