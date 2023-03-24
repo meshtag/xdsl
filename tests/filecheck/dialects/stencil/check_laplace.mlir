@@ -99,7 +99,6 @@
   func.func @compare_3d_memref_f64(%dim1: index, %dim2: index, %dim3: index, %memref1 : memref<?x?x?xf64>, %memref2 : memref<?x?x?xf64>) -> i1 {
     %c0 = arith.constant 0 : index
     %c1 = arith.constant 1 : index
-    %false_val = arith.constant 1 : i1
 
     scf.for %i = %c0 to %dim1 step %c1 {
       scf.for %j = %c0 to %dim2 step %c1 {
@@ -121,8 +120,6 @@
   }
 
   "func.func"() ({
-    %c44 = "arith.constant"() {"value" = 44 : index} : () -> index
-
     %memref1_size1 = "arith.constant"() {"value" = 100 : index} : () -> index
     %memref1_size2 = "arith.constant"() {"value" = 100 : index} : () -> index
     %memref1_size3 = "arith.constant"() {"value" = 100 : index} : () -> index
@@ -147,8 +144,6 @@
 
     %check_eq_memrefs = func.call @compare_3d_memref_f64(%memref1_size1, %memref1_size2, %memref1_size3, %memref2_xdsl, %memref2_oec) : (index, index, index, memref<?x?x?xf64>, memref<?x?x?xf64>) -> i1
     vector.print %check_eq_memrefs : i1
-
-    vector.print %c44 : index
 
     "func.return"() : () -> ()
   }) {"sym_name" = "main", "function_type" = () -> (), "sym_visibility" = "private"} : () -> ()
