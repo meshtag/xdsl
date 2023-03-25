@@ -3,6 +3,7 @@
 
 "builtin.module"() ({
   func.func private @printMemrefF64(memref<*xf64>)
+  func.func private @rtclock() -> f64
 
   func.func @laplace_oec(%arg0: memref<?x?x?xf64>, %arg1: memref<?x?x?xf64>) {
     %c0 = arith.constant 0 : index
@@ -108,10 +109,8 @@
           %val2 = memref.load %memref2[%i, %j, %k] : memref<?x?x?xf64>
 
           %check_val = arith.cmpf one, %val1, %val2 : f64
-          %check_diff = arith.subf %val1, %val2 : f64
           scf.if %check_val {
-            %c404 = arith.constant 404 : index
-            // vector.print %c404 : index
+            %check_diff = arith.subf %val1, %val2 : f64
             vector.print %check_diff : f64
           } 
         }
@@ -133,8 +132,36 @@
     %memref2_xdsl = func.call @alloc_3d_filled_f64(%memref1_size1, %memref1_size2, %memref1_size3, %memref2_elem) : (index, index, index, f64) -> memref<?x?x?xf64>
     %memref2_oec = func.call @alloc_3d_filled_f64(%memref1_size1, %memref1_size2, %memref1_size3, %memref2_elem) : (index, index, index, f64) -> memref<?x?x?xf64>
 
-    func.call @laplace_xdsl(%memref1, %memref2_xdsl) : (memref<?x?x?xf64>, memref<?x?x?xf64>) -> ()
-    func.call @laplace_oec(%memref1, %memref2_oec) : (memref<?x?x?xf64>, memref<?x?x?xf64>) -> ()
+    // Execution count.
+    %reps = arith.constant 100 : index
+
+    // Record start time.
+    %t_start = func.call @rtclock() : () -> f64
+
+    // Execute laplace_xdsl for specific times.
+    affine.for %arg0 = 0 to %reps {
+      func.call @laplace_xdsl(%memref1, %memref2_xdsl) : (memref<?x?x?xf64>, memref<?x?x?xf64>) -> ()
+    }
+
+    // Record end time for laplace_xdsl.
+    %t_end_laplace_xdsl = func.call @rtclock() : () -> f64
+
+    // Execute laplace_oec for specific times.
+    affine.for %arg0 = 0 to %reps {
+      func.call @laplace_oec(%memref1, %memref2_oec) : (memref<?x?x?xf64>, memref<?x?x?xf64>) -> ()
+    }
+
+    // Record end time for laplace_oec.
+    %t_end_laplace_oec = func.call @rtclock() : () -> f64
+
+    // Get the total running time for laplace_xdsl.
+    %t_laplace_xdsl = arith.subf %t_end_laplace_xdsl, %t_start : f64
+
+    // Get the total running time for laplace_oec.
+    %t_laplace_oec = arith.subf %t_end_laplace_oec, %t_end_laplace_xdsl : f64
+
+    vector.print %t_laplace_xdsl : f64 // Print total time taken by laplace_xdsl.
+    vector.print %t_laplace_oec : f64  // Print total time taken by laplace_oec.
 
     // %print_memref1 = memref.cast %memref1 : memref<?x?x?xf64> to memref<*xf64>
     // func.call @printMemrefF64(%print_memref1) : (memref<*xf64>) -> ()
