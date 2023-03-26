@@ -1,4 +1,4 @@
-Here
+<class 'xdsl.dialects.experimental.stencil.ApplyOp'>
 "builtin.module"() ({
   "func.func"() ({
   ^0(%0 : !stencil.field<[-1 : i64, -1 : i64, -1 : i64], f64>, %1 : !stencil.field<[-1 : i64, -1 : i64, -1 : i64], f64>):
