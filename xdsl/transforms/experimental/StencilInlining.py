@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from math import prod
 from typing import TypeVar, Any
 from warnings import warn
 
@@ -12,7 +13,7 @@ from xdsl.dialects.func import FuncOp
 from xdsl.dialects.memref import MemRefType
 from xdsl.dialects import memref, arith, scf, builtin, gpu
 
-from xdsl.dialects.experimental.stencil import AccessOp, ApplyOp, CastOp, FieldType, IndexAttr, LoadOp, ReturnOp, StoreOp, TempType, ExternalLoadOp
+from xdsl.dialects.experimental.stencil import AccessOp, ApplyOp, CastOp, FieldType, IndexAttr, LoadOp, ReturnOp, StoreOp, StoreResultOp, TempType, ExternalLoadOp
 from xdsl.utils.exceptions import VerifyException
 
 _TypeElement = TypeVar("_TypeElement", bound=Attribute)
@@ -35,6 +36,11 @@ class StencilInliningPattern(RewritePattern):
         for use in producer_op.res[0].uses:
             if (isinstance(use.operation, StoreOp)):
                 return True
+
+        for op in producer_op.region.blocks[0].ops:
+            if (isinstance(op, StoreResultOp)):
+                return True
+
         return False
 
         # Not adding the case for dealing with dynamic offsets since we do not support them
@@ -59,7 +65,31 @@ class InliningRewrite(StencilInliningPattern):
         consumer_op = super().GetSingleConsumerApplyOp(producer_op)
         assert (isinstance(consumer_op, ApplyOp))
 
-        
+        CombinedOpOperands = consumer_op.operands
+        CombinedOpLB = consumer_op.lb
+        CombinedOpUB = consumer_op.ub
+        print(CombinedOpUB)
+        # print(CombinedOpOperands)
+        # print(type(CombinedOpOperands))
+
+        # for operand in consumer_op.operands:
+        #     if (operand is not producer_op.res and operand not in CombinedOpOperands):
+        #         CombinedOpOperands += tuple([operand])
+
+        # print(CombinedOpOperands)
+
+        # ApplyOpCheck = ApplyOp.get(CombinedOpOperands, CombinedOpLB, CombinedOpUB, Block())
+        # print(ApplyOpCheck)
+
+        # rewriter.inline_block_at_pos(ApplyOpCheck.region.blocks[0], consumer_op.region.blocks[0], 0)
+
+        # for op in producer_op.region.blocks[0].ops:
+        #     if (isinstance(op, StoreResultOp)):
+        #         print("Here")
+        #         rewriter.replace_matched_op([], [op.res])
+
+        # producer_op.walk(self.WalkProducerOp(rewriter))
+        # producer_op.walk(self.WalkProducerOp(self, op, rewriter))
 
         # i64_temp_type = TempType.from_shape([2, 3], f64)
         # temp_ssa_value = OpResult(i64_temp_type, [], [])
