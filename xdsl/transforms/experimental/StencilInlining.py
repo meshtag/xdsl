@@ -47,10 +47,11 @@ class StencilInliningPattern(RewritePattern):
                                    consumer_op: ApplyOp) -> bool:
         return True
 
-    def GetSingleConsumerApplyOp(self, producer_op: ApplyOp):
+    def GetSingleConsumerApplyOp(self, producer_op: ApplyOp) -> ApplyOp | None:
         for use in producer_op.res[0].uses:
             if (isinstance(use.operation, ApplyOp)):
-                return ApplyOp
+                return use.operation
+        return None
 
 
 @dataclass
@@ -59,7 +60,7 @@ class InliningRewrite(StencilInliningPattern):
     def InlineProducer(self, producer_op: ApplyOp, rewriter: PatternRewriter,
                        /):
         consumer_op = super().GetSingleConsumerApplyOp(producer_op)
-        print(consumer_op)
+        assert(isinstance(consumer_op, ApplyOp))
 
     @op_type_rewrite_pattern
     def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter, /):
