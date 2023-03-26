@@ -7,7 +7,7 @@ from xdsl.pattern_rewriter import (PatternRewriter, PatternRewriteWalker,
                                    RewritePattern, GreedyRewritePatternApplier,
                                    op_type_rewrite_pattern)
 from xdsl.ir import BlockArgument, MLContext, Operation, OpResult, Block
-from xdsl.irdl import Attribute
+from xdsl.irdl import Attribute, Region
 from xdsl.dialects.builtin import ArrayAttr, FunctionType, IntegerAttr, IntegerType, ModuleOp, f64, i64
 from xdsl.dialects.func import FuncOp
 from xdsl.dialects.memref import MemRefType
@@ -65,57 +65,32 @@ class InliningRewrite(StencilInliningPattern):
         consumer_op = super().GetSingleConsumerApplyOp(producer_op)
         assert (isinstance(consumer_op, ApplyOp))
 
-        CombinedOpOperands = consumer_op.operands
-        CombinedOpLB = consumer_op.lb
-        CombinedOpUB = consumer_op.ub
-        print(CombinedOpUB)
-        # print(CombinedOpOperands)
-        # print(type(CombinedOpOperands))
+        inlined_op_operands = list(producer_op.operands)
+        for operand in list(consumer_op.operands):
+            if operand is not producer_op.res[
+                    0] and operand not in producer_op.operands:
+                inlined_op_operands.append(operand)
 
-        # for operand in consumer_op.operands:
-        #     if (operand is not producer_op.res and operand not in CombinedOpOperands):
-        #         CombinedOpOperands += tuple([operand])
+        inlined_op_region = Region()
+        for block in consumer_op.region.blocks:
+            block.parent = None
+            inlined_op_region.add_block(block)
+        consumer_op.region.blocks = []
 
-        # print(CombinedOpOperands)
+        InlinedOp = ApplyOp.get(inlined_op_operands, consumer_op.lb,
+                                consumer_op.ub, inlined_op_region,
+                                consumer_op.res[0].typ)
 
-        # ApplyOpCheck = ApplyOp.get(CombinedOpOperands, CombinedOpLB, CombinedOpUB, Block())
-        # print(ApplyOpCheck)
-
-        # rewriter.inline_block_at_pos(ApplyOpCheck.region.blocks[0], consumer_op.region.blocks[0], 0)
-
-        # for op in producer_op.region.blocks[0].ops:
-        #     if (isinstance(op, StoreResultOp)):
-        #         print("Here")
-        #         rewriter.replace_matched_op([], [op.res])
-
-        # producer_op.walk(self.WalkProducerOp(rewriter))
-        # producer_op.walk(self.WalkProducerOp(self, op, rewriter))
-
-        # i64_temp_type = TempType.from_shape([2, 3], f64)
-        # temp_ssa_value = OpResult(i64_temp_type, [], [])
-
-        # lb = IndexAttr([
-        #     ArrayAttr([
-        #         IntegerAttr(0, i64),
-        #         IntegerAttr(0, i64),
-        #         IntegerAttr(0, i64)
-        #     ])
-        # ])
-        # ub = IndexAttr([
-        #     ArrayAttr([
-        #         IntegerAttr(64, i64),
-        #         IntegerAttr(64, i64),
-        #         IntegerAttr(64, i64)
-        #     ])
-        # ])
-
-        # ApplyOpCheck = ApplyOp.get([temp_ssa_value], lb, ub, Block())
-        # print(ApplyOpCheck)
+        print("\n\n")
+        print(InlinedOp)
+        # print("\n")
+        # print("Inlined op above")
+        # print("\n")
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter, /):
-        if isinstance(op, ApplyOp) and super().HasSingleConsumer(
-                op) and super().IsStencilInliningPossible(op):
+    def match_and_rewrite(self, op: ApplyOp, rewriter: PatternRewriter, /):
+        if super().HasSingleConsumer(op) and super().IsStencilInliningPossible(
+                op):
             self.InlineProducer(op, rewriter)
 
 

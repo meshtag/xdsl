@@ -422,25 +422,21 @@ class ApplyOp(Operation):
     def get(args: Sequence[SSAValue] | Sequence[Operation],
             lb: IndexAttr,
             ub: IndexAttr,
-            body: Block,
-            result_count: int = 1):
+            body: Region | list[Block] | list[Operation],
+            result_type: Attribute):
         assert len(args) > 0
         field_t = SSAValue.get(args[0]).typ
         assert isinstance(field_t, TempType)
         field_t = cast(FieldType[Attribute], field_t)
-
-        result_rank = len(field_t.shape.data)
 
         return ApplyOp.build(operands=[list(args)],
                              attributes={
                                  "lb": lb,
                                  "ub": ub
                              },
-                             regions=[Region.from_block_list([body])],
+                             regions=[Region.get(body)],
                              result_types=[[
-                                 TempType.from_shape([-1] * result_rank,
-                                                     field_t.element_type)
-                                 for _ in range(result_count)
+                                 result_type
                              ]])
 
 
