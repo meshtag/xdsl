@@ -5,9 +5,9 @@ from warnings import warn
 from xdsl.pattern_rewriter import (PatternRewriter, PatternRewriteWalker,
                                    RewritePattern, GreedyRewritePatternApplier,
                                    op_type_rewrite_pattern)
-from xdsl.ir import BlockArgument, MLContext, Operation
+from xdsl.ir import BlockArgument, MLContext, Operation, OpResult, Block
 from xdsl.irdl import Attribute
-from xdsl.dialects.builtin import FunctionType, ModuleOp
+from xdsl.dialects.builtin import ArrayAttr, FunctionType, IntegerAttr, IntegerType, ModuleOp, f64, i64
 from xdsl.dialects.func import FuncOp
 from xdsl.dialects.memref import MemRefType
 from xdsl.dialects import memref, arith, scf, builtin, gpu
@@ -32,13 +32,10 @@ class StencilInliningPattern(RewritePattern):
     # Check if inlining is possible
     def IsStencilInliningPossible(self, producer_op: ApplyOp) -> bool:
         # Do not inline producer ops that do not store stuff.
-        storeop_consumers_num = 0
         for use in producer_op.res[0].uses:
             if (isinstance(use.operation, StoreOp)):
-                storeop_consumers_num += 1
-
-        # Had to use '>' to make pyright happy.
-        return storeop_consumers_num > 0
+                return True
+        return False
 
         # Not adding the case for dealing with dynamic offsets since we do not support them
         # as of now.
@@ -60,7 +57,30 @@ class InliningRewrite(StencilInliningPattern):
     def InlineProducer(self, producer_op: ApplyOp, rewriter: PatternRewriter,
                        /):
         consumer_op = super().GetSingleConsumerApplyOp(producer_op)
-        assert(isinstance(consumer_op, ApplyOp))
+        assert (isinstance(consumer_op, ApplyOp))
+
+        
+
+        # i64_temp_type = TempType.from_shape([2, 3], f64)
+        # temp_ssa_value = OpResult(i64_temp_type, [], [])
+
+        # lb = IndexAttr([
+        #     ArrayAttr([
+        #         IntegerAttr(0, i64),
+        #         IntegerAttr(0, i64),
+        #         IntegerAttr(0, i64)
+        #     ])
+        # ])
+        # ub = IndexAttr([
+        #     ArrayAttr([
+        #         IntegerAttr(64, i64),
+        #         IntegerAttr(64, i64),
+        #         IntegerAttr(64, i64)
+        #     ])
+        # ])
+
+        # ApplyOpCheck = ApplyOp.get([temp_ssa_value], lb, ub, Block())
+        # print(ApplyOpCheck)
 
     @op_type_rewrite_pattern
     def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter, /):

@@ -420,7 +420,9 @@ class ApplyOp(Operation):
 
     @staticmethod
     def get(args: Sequence[SSAValue] | Sequence[Operation],
-            region: Region,
+            lb: IndexAttr,
+            ub: IndexAttr,
+            body: Block,
             result_count: int = 1):
         assert len(args) > 0
         field_t = SSAValue.get(args[0]).typ
@@ -430,7 +432,11 @@ class ApplyOp(Operation):
         result_rank = len(field_t.shape.data)
 
         return ApplyOp.build(operands=[list(args)],
-                             regions=[region],
+                             attributes={
+                                 "lb": lb,
+                                 "ub": ub
+                             },
+                             regions=[Region.from_block_list([body])],
                              result_types=[[
                                  TempType.from_shape([-1] * result_rank,
                                                      field_t.element_type)
