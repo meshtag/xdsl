@@ -1,4 +1,4 @@
-// RUN: xdsl-opt %s -t mlir -p stencil-shape-inference,convert-stencil-to-ll-mlir | filecheck %s
+// RUN: xdsl-opt %s -t mlir -p stencil-shape-inference,stencil-inlining,convert-stencil-to-ll-mlir | filecheck %s
 
 
 "builtin.module"() ({
