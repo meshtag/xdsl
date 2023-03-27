@@ -16,7 +16,7 @@
     ^bb0(%arg2: !stencil.temp<[66 : i64, 66 : i64, 63 : i64], f64>, %arg3: !stencil.temp<[64 : i64, 64 : i64, 60 : i64], f64>):  // no predecessors
       %5 = "stencil.access"(%arg2) {"offset" = #stencil.index<[0 : i64, 0 : i64, 0 : i64]>} : (!stencil.temp<[66 : i64, 66 : i64, 63 : i64], f64>) -> f64
       %6 = "stencil.access"(%arg3) {"offset" = #stencil.index<[1 : i64, 2 : i64, 3 : i64]>} : (!stencil.temp<[64 : i64, 64 : i64, 60 : i64], f64>) -> f64
-      %7 = "arith.addf"(%5, %6) : (f64, f64) -> f64
+      %7 = "arith.subf"(%5, %6) : (f64, f64) -> f64
       %8 = "stencil.store_result"(%7) : (f64) -> !stencil.result<f64>
       "stencil.return"(%8) : (!stencil.result<f64>) -> ()
     }) {"lb" = #stencil.index<[0 : i64, 0 : i64, 0 : i64]>, "ub" = #stencil.index<[64 : i64, 64 : i64, 60 : i64]>} : (!stencil.temp<[66 : i64, 66 : i64, 63 : i64], f64>, !stencil.temp<[64 : i64, 64 : i64, 60 : i64], f64>) -> !stencil.temp<[64 : i64, 64 : i64, 60 : i64], f64>

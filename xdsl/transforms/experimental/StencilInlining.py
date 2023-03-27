@@ -77,9 +77,52 @@ class InliningRewrite(StencilInliningPattern):
             inlined_op_region.add_block(block)
         consumer_op.region.blocks = []
 
+        # Remove ReturnOp and StoreResultOp from producer as they do not need to be inlined.
+        for op in producer_op.region.ops:
+            if (isinstance(op, ReturnOp)):
+                producer_op.region.blocks[0].erase_op(op)
+        for op in producer_op.region.ops:
+            if (isinstance(op, StoreResultOp)):
+                producer_op.region.blocks[0].erase_op(op)
+
+        # parent_block = consumer_op.parent
+        # parent_block.erase_op(consumer_op, False)
+
+        # for op in inlined_op_region.blocks[0].ops:
+        #     if (producer_op.res[0] in op.operands):
+        #         print(op)
+        #         print()
+        #     print(op)
+        #     print()
+
+        # for arg in inlined_op_region.blocks[0].args:
+        #     if arg is producer_op.res[0]:
+        #         arg_uses = set(arg.uses)
+        #         for use in arg_uses:
+        #             use.operation.replace_operand(
+        #                 use.index, inlined_op_region.blocks[0].args[use.index])
+        #         inlined_op_region.blocks[0].erase_arg(arg)
+
+        # for arg in inlined_op_region.blocks[0].args:
+        #     rewriter.erase_block_argument(arg, False)
+
+        # for op in inlined_op_operands:
+        #     rewriter.insert_block_argument(inlined_op_region.blocks[0], inlined_op_operands.index(op), op.typ)
+
+        # # for op in producer_op.region.blocks[0].ops:
+        # #     if (isinstance(op, StoreResultOp)):
+        # #         print(op.uses)
+
+        # # print(producer_op.region.blocks[0].ops)
+
+        # inlined_op_region.blocks[0].ops = producer_op.region.blocks[0].ops + inlined_op_region.blocks[0].ops
+
         InlinedOp = ApplyOp.get(inlined_op_operands, consumer_op.lb,
                                 consumer_op.ub, inlined_op_region,
                                 consumer_op.res[0].typ)
+
+        # rewriter.insert_op_at_pos(InlinedOp, consumer_op.region.blocks[0], )
+        rewriter.replace_matched_op(InlinedOp)
 
         print("\n\n")
         print(InlinedOp)
