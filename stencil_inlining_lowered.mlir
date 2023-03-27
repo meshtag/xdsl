@@ -1,7 +1,3 @@
-[<OpResult[!stencil.temp<[66 : !i64, 66 : !i64, 63 : !i64], !f64>] index: 0, operation: stencil.load, uses: 2>]
-Inlined operands above
-
-
 
 
 
