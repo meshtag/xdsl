@@ -80,9 +80,42 @@ class InliningRewrite(StencilInliningPattern):
                 producer_op.region.blocks[0].erase_op(op)
 
         inlined_op_region = Region()
-        for block in consumer_op.region.blocks:
-            block.parent = None
-            inlined_op_region.add_block(block)
+        inlined_op_block = Block()
+        for operand in inlined_op_operands:
+            rewriter.insert_block_argument(inlined_op_block,
+                                           inlined_op_operands.index(operand),
+                                           operand.typ)
+
+        for op in consumer_op.region.ops:
+            # Second comparison is potentially error prone
+            if isinstance(op,
+                          AccessOp) and op.temp.typ == producer_op.res[0].typ:
+                for producer_op_unit in producer_op.region.ops:
+                    if isinstance(producer_op_unit, AccessOp):
+                        producer_op_unit_clone = producer_op_unit.clone()
+                        new_offset = IndexAttr.add_offsets(
+                            producer_op_unit_clone.offset, op.offset)
+                        new_offset_attr = IndexAttr([
+                            ArrayAttr([
+                                IntegerAttr(new_offset[0], i64),
+                                IntegerAttr(new_offset[1], i64),
+                                IntegerAttr(new_offset[2], i64),
+                            ])
+                        ])
+                        producer_op_unit_clone.offset = new_offset_attr
+                        inlined_op_block.add_op(producer_op_unit_clone)
+                    else:
+                        producer_op_unit_clone_normal_op = producer_op_unit.clone(
+                        )
+                        inlined_op_block.add_op(
+                            producer_op_unit_clone_normal_op)
+            else:
+                op_clone = op.clone()
+                inlined_op_block.add_op(op_clone)
+
+        inlined_op_region.add_block(inlined_op_block)
+
+        # Mark consumer op as empty since its contents are already inlined.
         consumer_op.region.blocks = []
 
         InlinedOp = ApplyOp.get(inlined_op_operands, consumer_op.lb,
@@ -91,8 +124,8 @@ class InliningRewrite(StencilInliningPattern):
 
         rewriter.replace_matched_op(InlinedOp)
 
-        print("\n\n")
-        print(InlinedOp)
+        # print("\n\n")
+        # print(InlinedOp)
 
     @op_type_rewrite_pattern
     def match_and_rewrite(self, op: ApplyOp, rewriter: PatternRewriter, /):

@@ -158,6 +158,13 @@ class IndexAttr(ParametrizedAttribute):
             for lb, ub in zip(lb.array.data, ub.array.data)
         ]
 
+    @staticmethod
+    def add_offsets(lb: IndexAttr, ub: IndexAttr) -> list[int]:
+        return [
+            ub.value.data + lb.value.data 
+            for lb, ub in zip(lb.array.data, ub.array.data)
+        ]
+
     #TODO : come to an agreement on, do we want to allow that kind of things on
     # Attributes? Author's opinion is a clear yes :P
     def __neg__(self) -> IndexAttr:
