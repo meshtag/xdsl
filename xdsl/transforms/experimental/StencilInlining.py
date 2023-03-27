@@ -115,14 +115,18 @@ class InliningRewrite(StencilInliningPattern):
 
         inlined_op_region.add_block(inlined_op_block)
 
-        # Mark consumer op as empty since its contents are already inlined.
-        consumer_op.region.blocks = []
-
         InlinedOp = ApplyOp.get(inlined_op_operands, consumer_op.lb,
                                 consumer_op.ub, inlined_op_region,
                                 consumer_op.res[0].typ)
 
         rewriter.replace_matched_op(InlinedOp)
+
+        consumer_op_res_uses = set(consumer_op.res[0].uses)
+        for use in consumer_op_res_uses:
+            use.operation.replace_operand(use.index, InlinedOp.res[0])
+
+        consumer_op_parent = consumer_op.parent
+        consumer_op_parent.erase_op(consumer_op)
 
         # print("\n\n")
         # print(InlinedOp)
