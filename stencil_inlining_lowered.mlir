@@ -1,3 +1,82 @@
+OP print
+%0 : !f64 = stencil.access(%<UNKNOWN> : !stencil.temp<[66 : !i64, 66 : !i64, 63 : !i64], !f64>) ["offset" = !stencil.index<[0 : !i64, 0 : !i64, 0 : !i64]>]
+
+OP Clone Print
+%0 : !f64 = stencil.access(%<UNKNOWN> : !stencil.temp<[66 : !i64, 66 : !i64, 63 : !i64], !f64>) ["offset" = !stencil.index<[0 : !i64, 0 : !i64, 0 : !i64]>]
+
+
+
+
+OP print
+%0 : !f64 = arith.subf(%<UNKNOWN> : !f64, %<UNKNOWN> : !f64)
+
+OP Clone Print
+%0 : !f64 = arith.subf(%<UNKNOWN> : !f64, %<UNKNOWN> : !f64)
+
+
+
+
+OP print
+%0 : !stencil.result<!f64> = stencil.store_result(%<UNKNOWN> : !f64)
+
+OP Clone Print
+%0 : !stencil.result<!f64> = stencil.store_result(%<UNKNOWN> : !f64)
+
+
+
+
+OP print
+stencil.return(%<UNKNOWN> : !stencil.result<!f64>)
+
+OP Clone Print
+stencil.return(%<UNKNOWN> : !stencil.result<!f64>)
+
+
+
+
+
+
+
+%0 : !stencil.temp<[64 : !i64, 64 : !i64, 60 : !i64], !f64> = stencil.apply(%<UNKNOWN> : !stencil.temp<[66 : !i64, 66 : !i64, 63 : !i64], !f64>) ["lb" = !stencil.index<[0 : !i64, 0 : !i64, 0 : !i64]>, "ub" = !stencil.index<[64 : !i64, 64 : !i64, 60 : !i64]>] {
+----------------------------------------------------------------------------^^^^^^^^^^-----------
+| ERROR: SSAValue is not part of the IR, are you sure all operations are added before their uses?
+-------------------------------------------------------------------------------------------------
+^0(%1 : !stencil.temp<[66 : !i64, 66 : !i64, 63 : !i64], !f64>):
+  %2 : !f64 = stencil.access(%<UNKNOWN> : !stencil.temp<[66 : !i64, 66 : !i64, 63 : !i64], !f64>) ["offset" = !stencil.index<[0 : !i64, 0 : !i64, 0 : !i64]>]
+  ---------------------------^^^^^^^^^^------------------------------------------------------------
+  | ERROR: SSAValue is not part of the IR, are you sure all operations are added before their uses?
+  -------------------------------------------------------------------------------------------------
+  %3 : !f64 = stencil.access(%<UNKNOWN> : !stencil.temp<[66 : !i64, 66 : !i64, 63 : !i64], !f64>) ["offset" = !stencil.index<[0 : !i64, 2 : !i64, 3 : !i64]>]
+  ---------------------------^^^^^^^^^^------------------------------------------------------------
+  | ERROR: SSAValue is not part of the IR, are you sure all operations are added before their uses?
+  -------------------------------------------------------------------------------------------------
+  %4 : !f64 = stencil.access(%<UNKNOWN> : !stencil.temp<[66 : !i64, 66 : !i64, 63 : !i64], !f64>) ["offset" = !stencil.index<[2 : !i64, 2 : !i64, 3 : !i64]>]
+  ---------------------------^^^^^^^^^^------------------------------------------------------------
+  | ERROR: SSAValue is not part of the IR, are you sure all operations are added before their uses?
+  -------------------------------------------------------------------------------------------------
+  %5 : !f64 = arith.addf(%<UNKNOWN> : !f64, %<UNKNOWN> : !f64)
+  -----------------------^^^^^^^^^^----------------------------------------------------------------
+  | ERROR: SSAValue is not part of the IR, are you sure all operations are added before their uses?
+  -------------------------------------------------------------------------------------------------
+  ------------------------------------------^^^^^^^^^^---------------------------------------------
+  | ERROR: SSAValue is not part of the IR, are you sure all operations are added before their uses?
+  -------------------------------------------------------------------------------------------------
+  %6 : !f64 = arith.subf(%<UNKNOWN> : !f64, %<UNKNOWN> : !f64)
+  -----------------------^^^^^^^^^^----------------------------------------------------------------
+  | ERROR: SSAValue is not part of the IR, are you sure all operations are added before their uses?
+  -------------------------------------------------------------------------------------------------
+  ------------------------------------------^^^^^^^^^^---------------------------------------------
+  | ERROR: SSAValue is not part of the IR, are you sure all operations are added before their uses?
+  -------------------------------------------------------------------------------------------------
+  %7 : !stencil.result<!f64> = stencil.store_result(%<UNKNOWN> : !f64)
+  --------------------------------------------------^^^^^^^^^^-------------------------------------
+  | ERROR: SSAValue is not part of the IR, are you sure all operations are added before their uses?
+  -------------------------------------------------------------------------------------------------
+  stencil.return(%<UNKNOWN> : !stencil.result<!f64>)
+  ---------------^^^^^^^^^^------------------------------------------------------------------------
+  | ERROR: SSAValue is not part of the IR, are you sure all operations are added before their uses?
+  -------------------------------------------------------------------------------------------------
+}
 "builtin.module"() ({
   "func.func"() ({
   ^0(%arg0 : !stencil.field<[-1 : i64, -1 : i64, -1 : i64], f64>, %arg1 : !stencil.field<[-1 : i64, -1 : i64, -1 : i64], f64>):
