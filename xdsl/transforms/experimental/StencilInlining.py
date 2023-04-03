@@ -62,11 +62,65 @@ class InliningRewrite(StencilInliningPattern):
 
     def InlineProducer(self, producer_op: ApplyOp, rewriter: PatternRewriter,
                        /):
-        # print(producer_op)
-        # print("\n\n\n")
-        # Get corresponding consumer op.
         consumer_op = super().GetSingleConsumerApplyOp(producer_op)
         assert (isinstance(consumer_op, ApplyOp))
+
+        # print(producer_op)
+        # print("\n")
+
+        entry = producer_op.region.blocks[0]
+
+        for arg in entry.args:
+            arg_uses = set(arg.uses)
+            for use in arg_uses:
+                use.operation.replace_operand(use.index, producer_op.args[use.index])
+            entry.erase_arg(arg)
+
+
+        entry1 = consumer_op.region.blocks[0]
+
+        for arg1 in entry1.args:
+            arg_uses1 = set(arg1.uses)
+            for use1 in arg_uses1:
+                use1.operation.replace_operand(use1.index, consumer_op.args[use1.index])
+            entry1.erase_arg(arg1)
+
+
+        # # print(producer_op)
+        # # print("\n")
+
+        # dim = len(producer_op.lb.array.data)
+
+        # for _ in range(dim):
+        #     rewriter.insert_block_argument(entry, 0, builtin.IndexType())
+
+        # body = rewriter.move_region_contents_to_new_regions(producer_op.region)
+
+        # # Move the body to the loop
+        # body.blocks[0].add_op(scf.Yield.get())
+
+        # dims = IndexAttr.size_from_bounds(producer_op.lb, producer_op.ub)
+        # zero = arith.Constant.from_int_and_width(0, builtin.IndexType())
+        # one = arith.Constant.from_int_and_width(1, builtin.IndexType())
+        # upperBounds = [
+        #     arith.Constant.from_int_and_width(x, builtin.IndexType())
+        #     for x in dims
+        # ]
+
+
+        # p = scf.ParallelOp.get(lowerBounds=[zero] * dim,
+        #                        upperBounds=upperBounds,
+        #                        steps=[one] * dim,
+        #                        body=body)
+
+        # print(producer_op)
+        # print("\n")
+        # print(p)
+        # print("\n")
+
+        # rewriter.insert_op_before_matched_op([zero, one, *upperBounds, p])
+        # rewriter.insert_op_before_matched_op([p])
+        # rewriter.erase_matched_op(False)
 
         # Capture operands for the inlined op.
         inlined_op_operands = list(producer_op.operands)
@@ -74,6 +128,10 @@ class InliningRewrite(StencilInliningPattern):
             if operand is not producer_op.res[
                     0] and operand not in producer_op.operands:
                 inlined_op_operands.append(operand)
+
+        print(list(producer_op.operands[0].uses)[1].operation)
+        print("\n")
+        print(consumer_op)
 
         # Remove ReturnOp and StoreResultOp from producer as they do not need to be inlined.
         for op in producer_op.region.ops:
@@ -87,9 +145,8 @@ class InliningRewrite(StencilInliningPattern):
         inlined_op_block = Block()
 
         # Insert inlined op block arguments in inlined op block.
-        for operand in inlined_op_operands:
-            rewriter.insert_block_argument(inlined_op_block,
-                                           inlined_op_operands.index(operand),
+        for i, operand in enumerate(inlined_op_operands):
+            rewriter.insert_block_argument(inlined_op_block, i,
                                            operand.typ)
 
         # Start inlining ops depending on their use in consumer op.
@@ -120,15 +177,20 @@ class InliningRewrite(StencilInliningPattern):
                 # print(op.operands)
                 # print()
 
-                print("OP print")
-                print(op)
-                print()
-                print("OP Clone Print")
-                print(op_clone)
-                print("\n\n\n")
-                # op_clone.operands = inlined_op_block.parent.parent.args[0]
+                # print("OP print")
+                # print(op)
+                # print()
+                # print("OP Clone Print")
+                # print(op_clone)
+                # print("\n\n\n")
+                # op_clone.operands = inlined_op_block.args
+                print(op_clone.operands)
+                print("\n")
+                print(op.operands)
+                print("\n")
 
                 inlined_op_block.add_op(op_clone)
+                # break
             # op_num += 1
 
         # Attach inlined op block to the inlined op region as defined above.
@@ -139,7 +201,8 @@ class InliningRewrite(StencilInliningPattern):
                                 consumer_op.ub, inlined_op_region,
                                 consumer_op.res[0].typ)
 
-        rewriter.replace_matched_op(InlinedOp)
+        rewriter.insert_op_before_matched_op([InlinedOp])
+        # rewriter.replace_matched_op(InlinedOp)
 
         # Replace consumer op's result with inlined op's result.
         consumer_op_res_uses = set(consumer_op.res[0].uses)
@@ -149,14 +212,18 @@ class InliningRewrite(StencilInliningPattern):
         # Remove consumer op from the IR.
         consumer_op_parent = consumer_op.parent
         consumer_op_parent.erase_op(consumer_op)
+        rewriter.erase_matched_op(False)
 
-        print("\n\n")
-        print(InlinedOp)
+        # print("\n\n")
+        # print(InlinedOp)
 
     @op_type_rewrite_pattern
     def match_and_rewrite(self, op: ApplyOp, rewriter: PatternRewriter, /):
         if super().HasSingleConsumer(op) and super().IsStencilInliningPossible(
                 op):
+            # print("Original Here")
+            # print(op)
+            # print("Original Here\n")
             self.InlineProducer(op, rewriter)
 
 
