@@ -105,9 +105,6 @@ class InliningRewrite(StencilInliningPattern):
             for use in uses:
                 use.operation.replace_operand(use.index, inlined_op_block.args[i])
 
-        # print(producer_op.res[0].typ)
-        # print("\n")
-
         # Start inlining ops depending on their use in consumer op.
         for op in consumer_op.region.ops:
             # Second comparison is potentially error prone
@@ -160,7 +157,6 @@ class InliningRewrite(StencilInliningPattern):
                                 consumer_op.res[0].typ)
 
         rewriter.insert_op_before_matched_op([InlinedOp])
-        # rewriter.replace_matched_op(InlinedOp)
 
         # Replace consumer op's result with inlined op's result.
         consumer_op_res_uses = set(consumer_op.res[0].uses)
@@ -172,16 +168,10 @@ class InliningRewrite(StencilInliningPattern):
         consumer_op_parent.erase_op(consumer_op)
         rewriter.erase_matched_op(False)
 
-        # print("\n\n")
-        # print(InlinedOp)
-
     @op_type_rewrite_pattern
     def match_and_rewrite(self, op: ApplyOp, rewriter: PatternRewriter, /):
         if super().HasSingleConsumer(op) and super().IsStencilInliningPossible(
                 op):
-            # print("Original Here")
-            # print(op)
-            # print("Original Here\n")
             self.InlineProducer(op, rewriter)
 
 
