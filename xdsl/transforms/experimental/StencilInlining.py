@@ -99,17 +99,22 @@ class InliningRewrite(StencilInliningPattern):
 
         # Insert inlined op block arguments in inlined op block.
         for i, operand in enumerate(inlined_op_operands):
-            rewriter.insert_block_argument(inlined_op_block, i,
-                                           operand.typ)
+            rewriter.insert_block_argument(inlined_op_block, i, operand.typ)
             uses = list(operand.uses)
             for use in uses:
-                use.operation.replace_operand(use.index, inlined_op_block.args[i])
+                use.operation.replace_operand(use.index,
+                                              inlined_op_block.args[i])
+
+        producer_op_result_traces = [
+            use.operation.args[use.index] for use in producer_op.res[i].uses
+            if isinstance(use.operation, ApplyOp)
+            for i in range(len(producer_op.res))
+        ]
 
         # Start inlining ops depending on their use in consumer op.
         for op in consumer_op.region.ops:
-            # Second comparison is potentially error prone
             if isinstance(op,
-                          AccessOp) and op.temp.typ == producer_op.res[0].typ:
+                          AccessOp) and op.temp in producer_op_result_traces:
                 for i, producer_op_unit in enumerate(producer_op.region.ops):
                     if isinstance(producer_op_unit, AccessOp):
                         producer_op_unit_clone = producer_op_unit.clone()
@@ -126,7 +131,8 @@ class InliningRewrite(StencilInliningPattern):
 
                         uses = list(producer_op_unit.res.uses)
                         for use in uses:
-                            use.operation.replace_operand(use.index, producer_op_unit_clone.res)
+                            use.operation.replace_operand(
+                                use.index, producer_op_unit_clone.res)
                     else:
                         producer_op_unit_clone_normal_op = producer_op_unit.clone(
                         )
@@ -134,11 +140,13 @@ class InliningRewrite(StencilInliningPattern):
                             producer_op_unit_clone_normal_op)
 
                         if i == len(producer_op.region.ops) - 1:
-                            res_final = producer_op_unit_clone_normal_op.results[0]
+                            res_final = producer_op_unit_clone_normal_op.results[
+                                0]
 
                             uses = list(op.results[0].uses)
                             for use in uses:
-                                use.operation.replace_operand(use.index, res_final)
+                                use.operation.replace_operand(
+                                    use.index, res_final)
             else:
                 op_clone = op.clone()
                 inlined_op_block.add_op(op_clone)
@@ -146,7 +154,8 @@ class InliningRewrite(StencilInliningPattern):
                 if len(op.results):
                     uses = list(op.results[0].uses)
                     for use in uses:
-                        use.operation.replace_operand(use.index, op_clone.results[0])
+                        use.operation.replace_operand(use.index,
+                                                      op_clone.results[0])
 
         # Attach inlined op block to the inlined op region as defined above.
         inlined_op_region.add_block(inlined_op_block)
@@ -159,7 +168,7 @@ class InliningRewrite(StencilInliningPattern):
         rewriter.insert_op_before_matched_op([InlinedOp])
 
         # Replace consumer op's result with inlined op's result.
-        consumer_op_res_uses = set(consumer_op.res[0].uses)
+        consumer_op_res_uses = list(consumer_op.res[0].uses)
         for use in consumer_op_res_uses:
             use.operation.replace_operand(use.index, InlinedOp.res[0])
 
