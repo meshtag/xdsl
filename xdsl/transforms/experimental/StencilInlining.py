@@ -145,7 +145,6 @@ class InliningRewrite(StencilInliningPattern):
                             res_final = producer_op_unit_clone_normal_op.results[
                                 0]
 
-                            # Multiple returns should be captured when consumer returns multiple results
                             uses = list(op.results[0].uses)
                             for use in uses:
                                 use.operation.replace_operand(
