@@ -161,7 +161,7 @@ class IndexAttr(ParametrizedAttribute):
     @staticmethod
     def add_offsets(lb: IndexAttr, ub: IndexAttr) -> list[int]:
         return [
-            ub.value.data + lb.value.data 
+            ub.value.data + lb.value.data
             for lb, ub in zip(lb.array.data, ub.array.data)
         ]
 
@@ -426,11 +426,9 @@ class ApplyOp(Operation):
     res: Annotated[VarOpResult, TempType]
 
     @staticmethod
-    def get(args: Sequence[SSAValue] | Sequence[Operation],
-            lb: IndexAttr,
-            ub: IndexAttr,
-            body: Region | list[Block] | list[Operation],
-            result_type: Attribute):
+    def get(args: Sequence[SSAValue] | Sequence[Operation], lb: IndexAttr,
+            ub: IndexAttr, body: Region | list[Block] | list[Operation],
+            result_type: list[Attribute]):
         assert len(args) > 0
         field_t = SSAValue.get(args[0]).typ
         assert isinstance(field_t, TempType)
@@ -442,9 +440,7 @@ class ApplyOp(Operation):
                                  "ub": ub
                              },
                              regions=[Region.get(body)],
-                             result_types=[[
-                                 result_type
-                             ]])
+                             result_types=result_type)
 
 
 @irdl_op_definition

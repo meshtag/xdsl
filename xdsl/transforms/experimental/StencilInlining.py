@@ -27,6 +27,8 @@ class StencilInliningPattern(RewritePattern):
         for use in producer_op.res[0].uses:
             if (isinstance(use.operation, ApplyOp)):
                 applyop_consumers_num += 1
+            if (applyop_consumers_num > 1):
+                break
 
         return applyop_consumers_num == 1
 
@@ -143,6 +145,7 @@ class InliningRewrite(StencilInliningPattern):
                             res_final = producer_op_unit_clone_normal_op.results[
                                 0]
 
+                            # Multiple returns should be captured when consumer returns multiple results
                             uses = list(op.results[0].uses)
                             for use in uses:
                                 use.operation.replace_operand(
@@ -151,28 +154,32 @@ class InliningRewrite(StencilInliningPattern):
                 op_clone = op.clone()
                 inlined_op_block.add_op(op_clone)
 
-                if len(op.results):
-                    uses = list(op.results[0].uses)
-                    for use in uses:
+                for i, res in enumerate(op.results):
+                    res_uses = list(res.uses)
+                    for use in res_uses:
                         use.operation.replace_operand(use.index,
-                                                      op_clone.results[0])
+                                                      op_clone.results[i])
 
         # Attach inlined op block to the inlined op region as defined above.
         inlined_op_region.add_block(inlined_op_block)
 
+        inlined_op_res_list = [
+            consumer_op_res.typ for consumer_op_res in consumer_op.res
+        ]
+
         # Get the final op.
         InlinedOp = ApplyOp.get(inlined_op_operands, consumer_op.lb,
                                 consumer_op.ub, inlined_op_region,
-                                consumer_op.res[0].typ)
+                                [inlined_op_res_list])
 
         rewriter.insert_op_before_matched_op([InlinedOp])
 
         # Replace consumer op's result with inlined op's result.
         consumer_op_res_list = list(consumer_op.res)
-        for consumer_op_res in consumer_op_res_list:
+        for i, consumer_op_res in enumerate(consumer_op_res_list):
             consumer_op_res_uses = list(consumer_op_res.uses)
             for use in consumer_op_res_uses:
-                use.operation.replace_operand(use.index, InlinedOp.res[0])
+                use.operation.replace_operand(use.index, InlinedOp.res[i])
 
         # Remove consumer op from the IR.
         consumer_op_parent = consumer_op.parent
