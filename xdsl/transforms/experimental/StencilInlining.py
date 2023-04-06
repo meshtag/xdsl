@@ -168,9 +168,11 @@ class InliningRewrite(StencilInliningPattern):
         rewriter.insert_op_before_matched_op([InlinedOp])
 
         # Replace consumer op's result with inlined op's result.
-        consumer_op_res_uses = list(consumer_op.res[0].uses)
-        for use in consumer_op_res_uses:
-            use.operation.replace_operand(use.index, InlinedOp.res[0])
+        consumer_op_res_list = list(consumer_op.res)
+        for consumer_op_res in consumer_op_res_list:
+            consumer_op_res_uses = list(consumer_op_res.uses)
+            for use in consumer_op_res_uses:
+                use.operation.replace_operand(use.index, InlinedOp.res[0])
 
         # Remove consumer op from the IR.
         consumer_op_parent = consumer_op.parent
