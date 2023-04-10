@@ -90,12 +90,12 @@ class InliningRewrite(StencilInliningPattern):
 
         # Remove ReturnOp and StoreResultOp from producer which do not have another
         # use apart from the consumer_op as they do not need to be inlined.
-        # for op in producer_op.region.ops:
-        #     if (isinstance(op, ReturnOp)):
-        #         producer_op.region.blocks[0].erase_op(op)
-        # for op in producer_op.region.ops:
-        #     if (isinstance(op, StoreResultOp)):
-        #         producer_op.region.blocks[0].erase_op(op)
+        for op in producer_op.region.ops:
+            if (isinstance(op, ReturnOp)):
+                producer_op.region.blocks[0].erase_op(op)
+        for op in producer_op.region.ops:
+            if (isinstance(op, StoreResultOp)):
+                producer_op.region.blocks[0].erase_op(op)
 
         inlined_op_region = Region()
         inlined_op_block = Block()
@@ -136,27 +136,20 @@ class InliningRewrite(StencilInliningPattern):
                         for use in uses:
                             use.operation.replace_operand(
                                 use.index, producer_op_unit_clone.res)
-                    elif not isinstance(producer_op_unit,
-                                        StoreResultOp) and not isinstance(
-                                            producer_op_unit, ReturnOp):
+                    else:
                         producer_op_unit_clone_normal_op = producer_op_unit.clone(
                         )
                         inlined_op_block.add_op(
                             producer_op_unit_clone_normal_op)
 
-                        if isinstance(producer_op.region.ops[i + 1],
-                                      StoreResultOp) or isinstance(
-                                          producer_op.region.ops[i + 1],
-                                          ReturnOp):
+                        if i == len(producer_op.region.ops) - 1:
                             res_final = producer_op_unit_clone_normal_op.results[
-                                0]
+                            0]
 
-                            op_res = list(op.results)
-                            for res in op_res:
-                                uses = list(res.uses)
-                                for use in uses:
-                                    use.operation.replace_operand(
-                                        use.index, res_final)
+                            uses = list(op.results[0].uses)
+                            for use in uses:
+                                use.operation.replace_operand(
+                                    use.index, res_final)
             else:
                 op_clone = op.clone()
                 inlined_op_block.add_op(op_clone)
