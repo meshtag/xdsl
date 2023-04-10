@@ -89,12 +89,28 @@ class InliningRewrite(StencilInliningPattern):
                 inlined_op_operands.append(operand)
 
         # Remove ReturnOp and StoreResultOp from producer which do not have another
-        # use apart from the consumer_op as they do not need to be inlined.
+        # use apart from the consumer_op.
         for op in producer_op.region.ops:
-            if (isinstance(op, ReturnOp)):
-                producer_op.region.blocks[0].erase_op(op)
+            if isinstance(op, ReturnOp):
+                external_use_flag = 0
+                conserved_return_val = []
+                op_args = list(op.operands)
+                for i, return_val in enumerate(op_args):
+                    for use in list(producer_op.results[i].uses):
+                        if not consumer_op is use.operation and not consumer_op.region.blocks[
+                                0] is use.operation.parent:
+                            external_use_flag = 1
+                            break
+                    if external_use_flag:
+                        conserved_return_val.append(return_val)
+                if not external_use_flag:
+                    producer_op.region.blocks[0].erase_op(op)
+                else:
+                    new_return_op = ReturnOp.get(conserved_return_val)
+                    rewriter.replace_op(op, new_return_op)
+
         for op in producer_op.region.ops:
-            if (isinstance(op, StoreResultOp)):
+            if isinstance(op, StoreResultOp) and not len(op.results[0].uses):
                 producer_op.region.blocks[0].erase_op(op)
 
         inlined_op_region = Region()
@@ -144,7 +160,7 @@ class InliningRewrite(StencilInliningPattern):
 
                         if i == len(producer_op.region.ops) - 1:
                             res_final = producer_op_unit_clone_normal_op.results[
-                            0]
+                                0]
 
                             uses = list(op.results[0].uses)
                             for use in uses:
