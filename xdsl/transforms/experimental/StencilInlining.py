@@ -1,22 +1,14 @@
 from dataclasses import dataclass
-from math import prod
-from typing import TypeVar, Any
-from warnings import warn
+from typing import TypeVar
 
 from xdsl.pattern_rewriter import (PatternRewriter, PatternRewriteWalker,
                                    RewritePattern, GreedyRewritePatternApplier,
                                    op_type_rewrite_pattern)
-from xdsl.ir import BlockArgument, MLContext, Operation, OpResult, Block
+from xdsl.ir import  MLContext, Block
 from xdsl.irdl import Attribute, Region
-from xdsl.dialects.builtin import ArrayAttr, FunctionType, IntegerAttr, IntegerType, ModuleOp, f64, i64
-from xdsl.dialects.func import FuncOp
-from xdsl.dialects.memref import MemRefType
-from xdsl.dialects import memref, arith, scf, builtin, gpu
+from xdsl.dialects.builtin import ArrayAttr, IntegerAttr, ModuleOp, i64
 
-from xdsl.dialects.experimental.stencil import AccessOp, ApplyOp, CastOp, FieldType, IndexAttr, LoadOp, ReturnOp, StoreOp, StoreResultOp, TempType, ExternalLoadOp
-from xdsl.utils.exceptions import VerifyException
-
-_TypeElement = TypeVar("_TypeElement", bound=Attribute)
+from xdsl.dialects.experimental.stencil import AccessOp, ApplyOp, IndexAttr, ReturnOp, StoreOp, StoreResultOp
 
 
 @dataclass
