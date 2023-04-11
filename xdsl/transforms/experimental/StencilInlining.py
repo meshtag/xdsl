@@ -88,6 +88,10 @@ class InliningRewrite(StencilInliningPattern):
                     producer_op.res) and operand not in producer_op.operands:
                 inlined_op_operands.append(operand)
 
+        inlined_op_res_list = [
+            consumer_op_res.typ for consumer_op_res in consumer_op.res
+        ]
+
         # Remove ReturnOp and StoreResultOp from producer which do not have another
         # use apart from the consumer_op.
         for op in producer_op.region.ops:
@@ -97,12 +101,14 @@ class InliningRewrite(StencilInliningPattern):
                 op_args = list(op.operands)
                 for i, return_val in enumerate(op_args):
                     for use in list(producer_op.results[i].uses):
+                        external_use_flag = 0
                         if not consumer_op is use.operation and not consumer_op.region.blocks[
                                 0] is use.operation.parent:
                             external_use_flag = 1
                             break
                     if external_use_flag:
                         conserved_return_val.append(return_val)
+                        inlined_op_res_list.append(producer_op.results[0].op.results[i].typ)
                 if not external_use_flag:
                     producer_op.region.blocks[0].erase_op(op)
                 else:
@@ -130,6 +136,8 @@ class InliningRewrite(StencilInliningPattern):
             for i in range(len(producer_op.res))
         ]
 
+        inlined_op_return_arguments = []
+
         # Start inlining ops depending on their use in consumer op.
         for op in consumer_op.region.ops:
             if isinstance(op,
@@ -152,21 +160,42 @@ class InliningRewrite(StencilInliningPattern):
                         for use in uses:
                             use.operation.replace_operand(
                                 use.index, producer_op_unit_clone.res)
-                    else:
+                    elif not isinstance(producer_op_unit, ReturnOp):
                         producer_op_unit_clone_normal_op = producer_op_unit.clone(
                         )
                         inlined_op_block.add_op(
                             producer_op_unit_clone_normal_op)
 
-                        if i == len(producer_op.region.ops) - 1:
-                            res_final = producer_op_unit_clone_normal_op.results[
-                                0]
-
-                            uses = list(op.results[0].uses)
+                        if isinstance(producer_op_unit, StoreResultOp):
+                            uses = list(producer_op_unit.res.uses)
                             for use in uses:
                                 use.operation.replace_operand(
-                                    use.index, res_final)
-            else:
+                                    use.index, producer_op_unit_clone_normal_op.res)
+
+                        if not isinstance(producer_op_unit, StoreResultOp):
+                            use_other_than_store_or_return = 0
+                            for res in producer_op_unit.results:
+                                for use in res.uses:
+                                    if not isinstance(
+                                            use.operation,
+                                            ReturnOp) and not isinstance(
+                                                use.operation, StoreResultOp):
+                                        use_other_than_store_or_return = 1
+                                        break
+
+                            if not use_other_than_store_or_return:
+                                res_final = producer_op_unit_clone_normal_op.results[
+                                    0]
+
+                                uses = list(op.results[0].uses)
+                                for use in uses:
+                                    use.operation.replace_operand(
+                                        use.index, res_final)
+                    elif isinstance(producer_op_unit, ReturnOp):
+                        inlined_op_return_arguments.extend(
+                            x.op.results[0]
+                            for x in list(producer_op_unit.operands))
+            elif not isinstance(op, ReturnOp):
                 op_clone = op.clone()
                 inlined_op_block.add_op(op_clone)
 
@@ -175,13 +204,20 @@ class InliningRewrite(StencilInliningPattern):
                     for use in res_uses:
                         use.operation.replace_operand(use.index,
                                                       op_clone.results[i])
+            else:
+                if not len(inlined_op_return_arguments):
+                    op_clone = op.clone()
+                    inlined_op_block.add_op(op_clone)
+                else:
+                    combined_list = [
+                        *inlined_op_return_arguments, *list(op.operands)
+                    ]
+
+                    inlined_op_return = ReturnOp.get(combined_list)
+                    inlined_op_block.add_op(inlined_op_return)
 
         # Attach inlined op block to the inlined op region as defined above.
         inlined_op_region.add_block(inlined_op_block)
-
-        inlined_op_res_list = [
-            consumer_op_res.typ for consumer_op_res in consumer_op.res
-        ]
 
         # Get the final op.
         InlinedOp = ApplyOp.get(inlined_op_operands, consumer_op.lb,
@@ -199,8 +235,8 @@ class InliningRewrite(StencilInliningPattern):
 
         # Remove consumer op from the IR.
         consumer_op_parent = consumer_op.parent
-        consumer_op_parent.erase_op(consumer_op)
-        rewriter.erase_matched_op(False)
+        consumer_op_parent.erase_op(consumer_op, False)
+        # rewriter.erase_matched_op(False)
 
     @op_type_rewrite_pattern
     def match_and_rewrite(self, op: ApplyOp, rewriter: PatternRewriter, /):
