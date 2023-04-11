@@ -92,6 +92,8 @@ class InliningRewrite(StencilInliningPattern):
             consumer_op_res.typ for consumer_op_res in consumer_op.res
         ]
 
+        producer_op_external_uses = []
+
         # Remove ReturnOp and StoreResultOp from producer which do not have another
         # use apart from the consumer_op.
         for op in producer_op.region.ops:
@@ -105,10 +107,12 @@ class InliningRewrite(StencilInliningPattern):
                         if not consumer_op is use.operation and not consumer_op.region.blocks[
                                 0] is use.operation.parent:
                             external_use_flag = 1
+                            producer_op_external_uses.append(use)
                             break
                     if external_use_flag:
                         conserved_return_val.append(return_val)
-                        inlined_op_res_list.append(producer_op.results[0].op.results[i].typ)
+                        inlined_op_res_list.append(
+                            producer_op.results[0].op.results[i].typ)
                 if not external_use_flag:
                     producer_op.region.blocks[0].erase_op(op)
                 else:
@@ -170,7 +174,8 @@ class InliningRewrite(StencilInliningPattern):
                             uses = list(producer_op_unit.res.uses)
                             for use in uses:
                                 use.operation.replace_operand(
-                                    use.index, producer_op_unit_clone_normal_op.res)
+                                    use.index,
+                                    producer_op_unit_clone_normal_op.res)
 
                         if not isinstance(producer_op_unit, StoreResultOp):
                             use_other_than_store_or_return = 0
@@ -226,17 +231,25 @@ class InliningRewrite(StencilInliningPattern):
 
         rewriter.insert_op_before_matched_op([InlinedOp])
 
-        # Replace consumer op's result with inlined op's result.
+        # Replace producer op's result with inlined op's results.
+        for i, use in enumerate(producer_op_external_uses):
+            use.operation.replace_operand(use.index, InlinedOp.res[i])
+
+        # Replace consumer op's result with inlined op's results.
         consumer_op_res_list = list(consumer_op.res)
         for i, consumer_op_res in enumerate(consumer_op_res_list):
             consumer_op_res_uses = list(consumer_op_res.uses)
             for use in consumer_op_res_uses:
-                use.operation.replace_operand(use.index, InlinedOp.res[i])
+                use.operation.replace_operand(
+                    use.index,
+                    InlinedOp.res[i + len(producer_op_external_uses)])
 
         # Remove consumer op from the IR.
         consumer_op_parent = consumer_op.parent
         consumer_op_parent.erase_op(consumer_op, False)
-        # rewriter.erase_matched_op(False)
+
+        # Remove producer op from the IR.
+        rewriter.erase_matched_op(False)
 
     @op_type_rewrite_pattern
     def match_and_rewrite(self, op: ApplyOp, rewriter: PatternRewriter, /):
