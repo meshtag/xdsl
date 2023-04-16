@@ -14,17 +14,17 @@
       %7 = "stencil.store_result"(%6) : (f64) -> !stencil.result<f64>
       "stencil.return"(%7) : (!stencil.result<f64>) -> ()
     }) {"lb" = #stencil.index<[1 : i64, 2 : i64, 3 : i64]>, "ub" = #stencil.index<[65 : i64, 66 : i64, 63 : i64]>} : (!stencil.temp<[66 : i64, 66 : i64, 63 : i64], f64>) -> !stencil.temp<[64 : i64, 64 : i64, 60 : i64], f64>
-    %8, %9 = "stencil.apply"(%2, %3) ({
-    ^2(%10 : !stencil.temp<[66 : i64, 66 : i64, 63 : i64], f64>, %arg3 : !stencil.temp<[64 : i64, 64 : i64, 60 : i64], f64>):
-      %11 = "stencil.access"(%10) {"offset" = #stencil.index<[0 : i64, 0 : i64, 0 : i64]>} : (!stencil.temp<[66 : i64, 66 : i64, 63 : i64], f64>) -> f64
-      %12 = "stencil.access"(%arg3) {"offset" = #stencil.index<[1 : i64, 2 : i64, 3 : i64]>} : (!stencil.temp<[64 : i64, 64 : i64, 60 : i64], f64>) -> f64
-      %13 = "arith.subf"(%11, %12) {"fastmath" = #arith.fastmath<none>} : (f64, f64) -> f64
-      %14 = "stencil.store_result"(%13) : (f64) -> !stencil.result<f64>
-      %15 = "stencil.store_result"(%12) : (f64) -> !stencil.result<f64>
-      "stencil.return"(%14, %15) : (!stencil.result<f64>, !stencil.result<f64>) -> ()
+    %4, %5 = "stencil.apply"(%2, %3) ({
+    ^2(%8 : !stencil.temp<[66 : i64, 66 : i64, 63 : i64], f64>, %9 : !stencil.temp<[64 : i64, 64 : i64, 60 : i64], f64>):
+      %10 = "stencil.access"(%8) {"offset" = #stencil.index<[0 : i64, 0 : i64, 0 : i64]>} : (!stencil.temp<[66 : i64, 66 : i64, 63 : i64], f64>) -> f64
+      %11 = "stencil.access"(%9) {"offset" = #stencil.index<[1 : i64, 2 : i64, 3 : i64]>} : (!stencil.temp<[64 : i64, 64 : i64, 60 : i64], f64>) -> f64
+      %12 = "arith.subf"(%10, %11) {"fastmath" = #arith.fastmath<none>} : (f64, f64) -> f64
+      %13 = "stencil.store_result"(%12) : (f64) -> !stencil.result<f64>
+      %14 = "stencil.store_result"(%11) : (f64) -> !stencil.result<f64>
+      "stencil.return"(%13, %14) : (!stencil.result<f64>, !stencil.result<f64>) -> ()
     }) {"lb" = #stencil.index<[0 : i64, 0 : i64, 0 : i64]>, "ub" = #stencil.index<[64 : i64, 64 : i64, 60 : i64]>} : (!stencil.temp<[66 : i64, 66 : i64, 63 : i64], f64>, !stencil.temp<[64 : i64, 64 : i64, 60 : i64], f64>) -> (!stencil.temp<[64 : i64, 64 : i64, 60 : i64], f64>, !stencil.temp<[64 : i64, 64 : i64, 60 : i64], f64>)
-    "stencil.store"(%8, %1) {"lb" = #stencil.index<[0 : i64, 0 : i64, 0 : i64]>, "ub" = #stencil.index<[64 : i64, 64 : i64, 60 : i64]>} : (!stencil.temp<[64 : i64, 64 : i64, 60 : i64], f64>, !stencil.field<[70 : i64, 70 : i64, 70 : i64], f64>) -> ()
-    "stencil.store"(%9, %0) {"lb" = #stencil.index<[0 : i64, 0 : i64, 0 : i64]>, "ub" = #stencil.index<[64 : i64, 64 : i64, 60 : i64]>} : (!stencil.temp<[64 : i64, 64 : i64, 60 : i64], f64>, !stencil.field<[70 : i64, 70 : i64, 70 : i64], f64>) -> ()
+    "stencil.store"(%4, %1) {"lb" = #stencil.index<[0 : i64, 0 : i64, 0 : i64]>, "ub" = #stencil.index<[64 : i64, 64 : i64, 60 : i64]>} : (!stencil.temp<[64 : i64, 64 : i64, 60 : i64], f64>, !stencil.field<[70 : i64, 70 : i64, 70 : i64], f64>) -> ()
+    "stencil.store"(%5, %0) {"lb" = #stencil.index<[0 : i64, 0 : i64, 0 : i64]>, "ub" = #stencil.index<[64 : i64, 64 : i64, 60 : i64]>} : (!stencil.temp<[64 : i64, 64 : i64, 60 : i64], f64>, !stencil.field<[70 : i64, 70 : i64, 70 : i64], f64>) -> ()
     "func.return"() : () -> ()
   }) {"function_type" = (!stencil.field<[-1 : i64, -1 : i64, -1 : i64], f64>, !stencil.field<[-1 : i64, -1 : i64, -1 : i64], f64>) -> (), "sym_name" = "simple_stencil_inlining"} : () -> ()
 }) : () -> ()

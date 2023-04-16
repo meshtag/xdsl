@@ -1,11 +1,10 @@
 from dataclasses import dataclass
-from typing import TypeVar
 
 from xdsl.pattern_rewriter import (PatternRewriter, PatternRewriteWalker,
                                    RewritePattern, GreedyRewritePatternApplier,
                                    op_type_rewrite_pattern)
 from xdsl.ir import  MLContext, Block
-from xdsl.irdl import Attribute, Region
+from xdsl.irdl import Region
 from xdsl.dialects.builtin import ArrayAttr, IntegerAttr, ModuleOp, i64
 
 from xdsl.dialects.experimental.stencil import AccessOp, ApplyOp, IndexAttr, ReturnOp, StoreOp, StoreResultOp
