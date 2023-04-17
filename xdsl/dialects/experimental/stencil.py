@@ -419,7 +419,7 @@ class ApplyOp(Operation):
       }
     """
     name: str = "stencil.apply"
-    args: Annotated[VarOperand, TempType]
+    args: Annotated[VarOperand, Attribute]
     lb: OptOpAttr[IndexAttr]
     ub: OptOpAttr[IndexAttr]
     region: Region
@@ -431,7 +431,7 @@ class ApplyOp(Operation):
             result_type: list[Attribute]):
         assert len(args) > 0
         field_t = SSAValue.get(args[0]).typ
-        assert isinstance(field_t, TempType)
+        # assert isinstance(field_t, TempType)
         field_t = cast(FieldType[Attribute], field_t)
 
         return ApplyOp.build(operands=[list(args)],

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from math import prod
 
 from xdsl.pattern_rewriter import (PatternRewriter, PatternRewriteWalker,
                                    RewritePattern, GreedyRewritePatternApplier,
@@ -187,10 +188,23 @@ class InliningRewrite(StencilInliningPattern):
                                 for use in uses:
                                     use.operation.replace_operand(
                                         use.index, res_final)
+
+                                uses = list(producer_op_unit.results[0].uses)
+                                for use in uses:
+                                    use.operation.replace_operand(
+                                        use.index, res_final)
+                            else:
+                                res_final = producer_op_unit_clone_normal_op.results[0]
+
+                                uses = list(producer_op_unit.results[0].uses)
+                                for use in uses:
+                                    use.operation.replace_operand(
+                                        use.index, res_final)
                     elif isinstance(producer_op_unit, ReturnOp):
-                        inlined_op_return_arguments.extend(
-                            x.op.results[0]
-                            for x in list(producer_op_unit.operands))
+                        if not len(inlined_op_return_arguments):
+                            inlined_op_return_arguments.extend(
+                                x.op.results[0]
+                                for x in list(producer_op_unit.operands))
             elif not isinstance(op, ReturnOp):
                 op_clone = op.clone()
                 inlined_op_block.add_op(op_clone)
