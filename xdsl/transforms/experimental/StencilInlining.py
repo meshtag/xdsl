@@ -10,25 +10,28 @@ from xdsl.dialects.builtin import ArrayAttr, IntegerAttr, ModuleOp, i64
 from xdsl.dialects.experimental.stencil import AccessOp, ApplyOp, IndexAttr, ReturnOp, StoreOp, StoreResultOp
 
 
+# Base class for stencil inlining and rerouting.
 @dataclass
 class StencilInliningPattern(RewritePattern):
     # Check if there is a single apply_op consumer for current producer apply_op.
     def HasSingleConsumer(self, producer_op: ApplyOp) -> bool:
         applyop_consumers_num = 0
-        for use in producer_op.res[0].uses:
-            if (isinstance(use.operation, ApplyOp)):
-                applyop_consumers_num += 1
-            if (applyop_consumers_num > 1):
-                break
+        for res in producer_op.res:
+            for use in res.uses:
+                if (isinstance(use.operation, ApplyOp)):
+                    applyop_consumers_num += 1
+                if (applyop_consumers_num > 1):
+                    break
 
         return applyop_consumers_num == 1
 
     # Check if inlining is possible
     def IsStencilInliningPossible(self, producer_op: ApplyOp) -> bool:
         # Do not inline producer ops that do not store stuff.
-        for use in producer_op.res[0].uses:
-            if (isinstance(use.operation, StoreOp)):
-                return True
+        for res in producer_op.res:
+            for use in res.uses:
+                if (isinstance(use.operation, StoreOp)):
+                    return True
 
         for op in producer_op.region.blocks[0].ops:
             if (isinstance(op, StoreResultOp)):
@@ -44,9 +47,10 @@ class StencilInliningPattern(RewritePattern):
         return True
 
     def GetSingleConsumerApplyOp(self, producer_op: ApplyOp) -> ApplyOp | None:
-        for use in producer_op.res[0].uses:
-            if (isinstance(use.operation, ApplyOp)):
-                return use.operation
+        for res in list(producer_op.res):
+            for use in res.uses:
+                if (isinstance(use.operation, ApplyOp)):
+                    return use.operation
         return None
 
 
@@ -125,11 +129,12 @@ class InliningRewrite(StencilInliningPattern):
                 use.operation.replace_operand(use.index,
                                               inlined_op_block.args[i])
 
-        producer_op_result_traces = [
-            use.operation.args[use.index] for use in producer_op.res[i].uses
-            if isinstance(use.operation, ApplyOp)
-            for i in range(len(producer_op.res))
-        ]
+        producer_op_result_traces = []
+
+        for i in range(len(producer_op.res)):
+            for use in producer_op.res[i].uses:
+                if (isinstance(use.operation, ApplyOp)):
+                    producer_op_result_traces.append(use.operation.args[use.index])
 
         inlined_op_return_arguments = []
 
@@ -170,14 +175,13 @@ class InliningRewrite(StencilInliningPattern):
 
                         if not isinstance(producer_op_unit, StoreResultOp):
                             use_other_than_store_or_return = 0
-                            for res in producer_op_unit.results:
-                                for use in res.uses:
-                                    if not isinstance(
-                                            use.operation,
-                                            ReturnOp) and not isinstance(
-                                                use.operation, StoreResultOp):
-                                        use_other_than_store_or_return = 1
-                                        break
+                            for use in producer_op_unit.results[0].uses:
+                                if not isinstance(
+                                        use.operation,
+                                        ReturnOp) and not isinstance(
+                                            use.operation, StoreResultOp):
+                                    use_other_than_store_or_return = 1
+                                    break
 
                             if not use_other_than_store_or_return:
                                 res_final = producer_op_unit_clone_normal_op.results[
