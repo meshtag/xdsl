@@ -1,10 +1,9 @@
 from dataclasses import dataclass
-from math import prod
 
 from xdsl.pattern_rewriter import (PatternRewriter, PatternRewriteWalker,
                                    RewritePattern, GreedyRewritePatternApplier,
                                    op_type_rewrite_pattern)
-from xdsl.ir import  MLContext, Block
+from xdsl.ir import MLContext, Block
 from xdsl.irdl import Region
 from xdsl.dialects.builtin import ArrayAttr, IntegerAttr, ModuleOp, i64
 
@@ -194,7 +193,8 @@ class InliningRewrite(StencilInliningPattern):
                                     use.operation.replace_operand(
                                         use.index, res_final)
                             else:
-                                res_final = producer_op_unit_clone_normal_op.results[0]
+                                res_final = producer_op_unit_clone_normal_op.results[
+                                    0]
 
                                 uses = list(producer_op_unit.results[0].uses)
                                 for use in uses:
