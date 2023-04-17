@@ -1,13 +1,17 @@
 from dataclasses import dataclass
+from lib2to3.pgen2.token import OP
 
 from xdsl.pattern_rewriter import (PatternRewriter, PatternRewriteWalker,
                                    RewritePattern, GreedyRewritePatternApplier,
                                    op_type_rewrite_pattern)
-from xdsl.ir import MLContext, Block
+from xdsl.ir import Attribute, MLContext, Block, OpResult, SSAValue, Use
 from xdsl.irdl import Region
-from xdsl.dialects.builtin import ArrayAttr, IntegerAttr, ModuleOp, i64
+from xdsl.dialects.builtin import ArrayAttr, IntegerAttr, IntegerType, ModuleOp, i64
 
-from xdsl.dialects.experimental.stencil import AccessOp, ApplyOp, IndexAttr, ReturnOp, StoreOp, StoreResultOp
+from xdsl.dialects.experimental.stencil import (AccessOp, ApplyOp, IndexAttr,
+                                                ResultType, ReturnOp, StoreOp,
+                                                StoreResultOp, TempType)
+from xdsl.utils.hints import isa
 
 
 # Base class for stencil inlining and rerouting.
@@ -46,6 +50,7 @@ class StencilInliningPattern(RewritePattern):
                                    consumer_op: ApplyOp) -> bool:
         return True
 
+    # Get the consumer apply op for considered producer apply op.
     def GetSingleConsumerApplyOp(self, producer_op: ApplyOp) -> ApplyOp | None:
         for res in list(producer_op.res):
             for use in res.uses:
@@ -59,12 +64,15 @@ class InliningRewrite(StencilInliningPattern):
 
     def InlineProducer(self, producer_op: ApplyOp, rewriter: PatternRewriter,
                        /):
+        # Get consumer apply op corresponding to the producer apply op.
         consumer_op = super().GetSingleConsumerApplyOp(producer_op)
         assert (isinstance(consumer_op, ApplyOp))
 
+        # Obtain entry points for both producer_op and consumer_op.
         entry_producer = producer_op.region.blocks[0]
         entry_consumer = consumer_op.region.blocks[0]
 
+        # Replace all current arguments by their definition and erase them from the block.
         for idx, arg in enumerate(entry_producer.args):
             arg_uses = set(arg.uses)
             for use in arg_uses:
@@ -77,24 +85,32 @@ class InliningRewrite(StencilInliningPattern):
                 use.operation.replace_operand(use.index, consumer_op.args[idx])
             entry_consumer.erase_arg(arg)
 
+        # Obtain operands for the final inlined op.
         inlined_op_operands = list(producer_op.operands)
         for operand in list(consumer_op.operands):
+            # Check if this operand is not a result or operand of producer_op.
             if operand not in list(
                     producer_op.res) and operand not in producer_op.operands:
                 inlined_op_operands.append(operand)
 
+        # Initiate result list of the inlined op with results of consumer op.
         inlined_op_res_list = [
             consumer_op_res.typ for consumer_op_res in consumer_op.res
         ]
 
-        producer_op_external_uses = []
+        # A container to store uses of producer op which do not overlap with consumer op.
+        producer_op_external_uses: list[Use] = []
 
         # Remove ReturnOp and StoreResultOp from producer which do not have another
         # use apart from the consumer_op.
         for op in producer_op.region.ops:
             if isinstance(op, ReturnOp):
+                # Flag for signifying an external use of the producer_op result apart from
+                # inside the consumer_op.
                 external_use_flag = 0
-                conserved_return_val = []
+                # Container for storing those results of producer_op which have an external use
+                # apart from inside the consumer_op.
+                conserved_return_val: list[OpResult] = []
                 op_args = list(op.operands)
                 for i, return_val in enumerate(op_args):
                     for use in list(producer_op.results[i].uses):
@@ -105,23 +121,30 @@ class InliningRewrite(StencilInliningPattern):
                             producer_op_external_uses.append(use)
                             break
                     if external_use_flag:
+                        assert isinstance(return_val, OpResult)
                         conserved_return_val.append(return_val)
                         inlined_op_res_list.append(
                             producer_op.results[0].op.results[i].typ)
                 if not external_use_flag:
+                    # Erase the producer_op's return op if no result is needed to be conserved
+                    # after inlining.
                     producer_op.region.blocks[0].erase_op(op)
                 else:
+                    # Replace the producer_op's return op with a new return op containing results
+                    # which are needed to be conserved after inlining.
                     new_return_op = ReturnOp.get(conserved_return_val)
                     rewriter.replace_op(op, new_return_op)
 
+        # Remove unused StoreResult ops from inside the producer_op.
         for op in producer_op.region.ops:
             if isinstance(op, StoreResultOp) and not len(op.results[0].uses):
                 producer_op.region.blocks[0].erase_op(op)
 
+        # Instantiate inlined op region and corresponding block.
         inlined_op_region = Region()
         inlined_op_block = Block()
 
-        # Insert inlined op block arguments in inlined op block.
+        # Insert inlined op block arguments in inlined op block and replace corresponding uses.
         for i, operand in enumerate(inlined_op_operands):
             rewriter.insert_block_argument(inlined_op_block, i, operand.typ)
             uses = list(operand.uses)
@@ -129,14 +152,17 @@ class InliningRewrite(StencilInliningPattern):
                 use.operation.replace_operand(use.index,
                                               inlined_op_block.args[i])
 
-        producer_op_result_traces = []
+        # Container to store traces of use of producer_op results in other apply ops.
+        producer_op_result_traces: list[SSAValue] = []
 
         for i in range(len(producer_op.res)):
             for use in producer_op.res[i].uses:
                 if (isinstance(use.operation, ApplyOp)):
-                    producer_op_result_traces.append(use.operation.args[use.index])
+                    producer_op_result_traces.append(
+                        use.operation.args[use.index])
 
-        inlined_op_return_arguments = []
+        # Container to store return values of the resultant inlined op.
+        inlined_op_return_arguments: list[OpResult] = []
 
         # Start inlining ops depending on their use in consumer op.
         for op in consumer_op.region.ops:
@@ -147,12 +173,13 @@ class InliningRewrite(StencilInliningPattern):
                         producer_op_unit_clone = producer_op_unit.clone()
                         new_offset = IndexAttr.add_offsets(
                             producer_op_unit_clone.offset, op.offset)
-                        new_offset_attr = IndexAttr([
-                            ArrayAttr([
+                        new_offset_integer_attr_array: list[
+                            IntegerAttr[IntegerType]] = [
                                 IntegerAttr(offset_val, i64)
                                 for offset_val in new_offset
-                            ])
-                        ])
+                            ]
+                        new_offset_attr = IndexAttr(
+                            [ArrayAttr(new_offset_integer_attr_array)])
                         producer_op_unit_clone.offset = new_offset_attr
                         inlined_op_block.add_op(producer_op_unit_clone)
 
@@ -171,15 +198,15 @@ class InliningRewrite(StencilInliningPattern):
                             for use in uses:
                                 use.operation.replace_operand(
                                     use.index,
-                                    producer_op_unit_clone_normal_op.res)
-
-                        if not isinstance(producer_op_unit, StoreResultOp):
+                                    producer_op_unit_clone_normal_op.results[0]
+                                )
+                        else:
                             use_other_than_store_or_return = 0
                             for use in producer_op_unit.results[0].uses:
-                                if not isinstance(
-                                        use.operation,
-                                        ReturnOp) and not isinstance(
-                                            use.operation, StoreResultOp):
+                                if not isinstance(use.operation,
+                                                  ReturnOp) and not isinstance(
+                                                      use.operation,
+                                                      StoreResultOp):
                                     use_other_than_store_or_return = 1
                                     break
 
@@ -206,9 +233,9 @@ class InliningRewrite(StencilInliningPattern):
                                         use.index, res_final)
                     elif isinstance(producer_op_unit, ReturnOp):
                         if not len(inlined_op_return_arguments):
-                            inlined_op_return_arguments.extend(
-                                x.op.results[0]
-                                for x in list(producer_op_unit.operands))
+                            for x in list(producer_op_unit.operands):
+                                assert isinstance(x, OpResult)
+                                inlined_op_return_arguments.append(x)
             elif not isinstance(op, ReturnOp):
                 op_clone = op.clone()
                 inlined_op_block.add_op(op_clone)
@@ -223,15 +250,18 @@ class InliningRewrite(StencilInliningPattern):
                     op_clone = op.clone()
                     inlined_op_block.add_op(op_clone)
                 else:
-                    combined_list = [
+                    combined_list: list[SSAValue] = [
                         *inlined_op_return_arguments, *list(op.operands)
                     ]
 
                     inlined_op_return = ReturnOp.get(combined_list)
                     inlined_op_block.add_op(inlined_op_return)
 
-        # Attach inlined op block to the inlined op region as defined above.
+        # Attach inlined op block to the inlined op region.
         inlined_op_region.add_block(inlined_op_block)
+
+        assert isinstance(consumer_op.lb, IndexAttr)
+        assert isinstance(consumer_op.ub, IndexAttr)
 
         # Get the final op.
         InlinedOp = ApplyOp.get(inlined_op_operands, consumer_op.lb,
