@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated, TypeVar, Iterable, Iterator
+from typing import Annotated, TypeVar, Iterable, Iterator, Generic, List, Sequence, cast
 
 from xdsl.dialects.builtin import (
     ParametrizedAttribute,
@@ -8,9 +8,9 @@ from xdsl.dialects.builtin import (
     IntegerType,
     ArrayAttr,
     ParameterDef,
+    AnyIntegerAttr,
 )
-from xdsl.dialects.experimental.stencil import FieldType
-from xdsl.ir import OpResult, SSAValue, Operation, Attribute, Dialect
+from xdsl.ir import OpResult, SSAValue, Operation, Attribute, Dialect, TypeAttribute
 from xdsl.irdl import (
     irdl_op_definition,
     IRDLOperation,
@@ -110,6 +110,42 @@ class IndexAttr(ParametrizedAttribute, Iterable[int]):
         return (e.value.data for e in self.array.data)
 
 
+@irdl_attr_definition
+class FieldType(Generic[_FieldTypeVar], ParametrizedAttribute, TypeAttribute):
+    name = "stencil.field"
+
+    shape: ParameterDef[ArrayAttr[AnyIntegerAttr]]
+    element_type: ParameterDef[_FieldTypeVar]
+
+    def get_num_dims(self) -> int:
+        return len(self.shape.data)
+
+    def get_shape(self) -> List[int]:
+        return [i.value.data for i in self.shape.data]
+
+    def verify(self):
+        if self.get_num_dims() <= 0:
+            raise VerifyException(
+                f"Number of dimensions for desired stencil must be greater than zero."
+            )
+
+    def __init__(
+        self,
+        shape: ArrayAttr[AnyIntegerAttr] | Sequence[AnyIntegerAttr] | Sequence[int],
+        typ: _FieldTypeVar
+    ) -> None:
+        if isinstance(shape, ArrayAttr):
+            super().__init__([shape, typ])
+
+        # cast to list
+        shape = cast(list[AnyIntegerAttr] | list[int], shape)
+
+        if len(shape) > 0 and isa(shape[0], list[AnyIntegerAttr]):
+            super().__init__([ArrayAttr(shape), typ]) # type: ignore
+        shape = cast(list[int], shape)
+        super().__init__([ArrayAttr([IntegerAttr[IntegerType](d, 64) for d in shape]), typ])
+
+
 @irdl_op_definition
 class CastOp(IRDLOperation):
     """
@@ -136,7 +172,7 @@ class CastOp(IRDLOperation):
         field_ssa = SSAValue.get(field)
         assert isa(field_ssa.typ, FieldType[Attribute])
         if res_type is None:
-            res_type = FieldType.from_shape(
+            res_type = FieldType(
                 tuple(ub_elm - lb_elm for lb_elm, ub_elm in zip(lb, ub)),
                 field_ssa.typ.element_type,
             )
@@ -190,4 +226,4 @@ class CastOp(IRDLOperation):
                 raise VerifyException("Input must be dynamically shaped")
 
 
-Stencil = Dialect([CastOp], [])
+Stencil = Dialect([CastOp], [FieldType, IndexAttr])

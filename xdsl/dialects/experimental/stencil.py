@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Sequence, TypeVar, Any, cast, Iterable, Iterator
+from typing import Sequence, TypeVar, Any, cast
 
 from xdsl.dialects import builtin
 from xdsl.dialects import memref
+from xdsl.dialects.stencil import FieldType, IndexAttr
 from xdsl.dialects.builtin import (
     AnyIntegerAttr,
     IntegerAttr,
@@ -61,35 +62,6 @@ class IntOrUnknown(AttrConstraint):
 
 
 _FieldTypeElement = TypeVar("_FieldTypeElement", bound=Attribute)
-
-
-@irdl_attr_definition
-class FieldType(Generic[_FieldTypeElement], ParametrizedAttribute, TypeAttribute):
-    name = "stencil.field"
-
-    shape: ParameterDef[ArrayAttr[AnyIntegerAttr]]
-    element_type: ParameterDef[_FieldTypeElement]
-
-    @staticmethod
-    def from_shape(
-        shape: ArrayAttr[AnyIntegerAttr] | Sequence[AnyIntegerAttr] | Sequence[int],
-        typ: _FieldTypeElement,
-    ) -> FieldType[_FieldTypeElement]:
-        assert len(shape) > 0
-
-        if isinstance(shape, ArrayAttr):
-            return FieldType.new([shape, typ])
-
-        # cast to list
-        shape = cast(list[AnyIntegerAttr] | list[int], shape)
-
-        if isa(shape[0], list[AnyIntegerAttr]):
-            # the if above is a sufficient type guard, but pyright does not understand :/
-            return FieldType([ArrayAttr(shape), typ])  # type: ignore
-        shape = cast(list[int], shape)
-        return FieldType(
-            [ArrayAttr([IntegerAttr[IntegerType](d, 64) for d in shape]), typ]
-        )
 
 
 @irdl_attr_definition
@@ -512,11 +484,9 @@ StencilExp = Dialect(
         HaloSwapOp,
     ],
     [
-        FieldType,
         TempType,
         ResultType,
         ElementType,
-        IndexAttr,
         LoopAttr,
     ],
 )
