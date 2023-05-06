@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Sequence, TypeVar, Any, cast, Iterable, Iterator
+from typing import Sequence, TypeVar, Any, cast, Iterable, Iterator, List
 
 from xdsl.dialects import builtin
 from xdsl.dialects import memref
@@ -67,15 +67,27 @@ _FieldTypeElement = TypeVar("_FieldTypeElement", bound=Attribute)
 class FieldType(Generic[_FieldTypeElement], ParametrizedAttribute, TypeAttribute):
     name = "stencil.field"
 
-    shape: ParameterDef[ArrayAttr[AnyIntegerAttr]]
     element_type: ParameterDef[_FieldTypeElement]
+    shape: ParameterDef[ArrayAttr[AnyIntegerAttr]]
+
+    def get_num_dims(self) -> int:
+        return len(self.shape.data)
+
+    def get_shape(self) -> List[int]:
+        return [i.value.data for i in self.shape.data]
+
+    def verify(self):
+        if self.get_num_dims() <= 0:
+            raise VerifyException(
+                f"Number of dimensions for desired stencil must be greater than zero."
+            )
+
 
     @staticmethod
     def from_shape(
-        shape: ArrayAttr[AnyIntegerAttr] | Sequence[AnyIntegerAttr] | Sequence[int],
         typ: _FieldTypeElement,
+        shape: ArrayAttr[AnyIntegerAttr] | Sequence[AnyIntegerAttr] | Sequence[int],
     ) -> FieldType[_FieldTypeElement]:
-        assert len(shape) > 0
 
         if isinstance(shape, ArrayAttr):
             return FieldType.new([shape, typ])
@@ -83,12 +95,12 @@ class FieldType(Generic[_FieldTypeElement], ParametrizedAttribute, TypeAttribute
         # cast to list
         shape = cast(list[AnyIntegerAttr] | list[int], shape)
 
-        if isa(shape[0], list[AnyIntegerAttr]):
+        if len(shape) > 0 and isa(shape[0], list[AnyIntegerAttr]):
             # the if above is a sufficient type guard, but pyright does not understand :/
             return FieldType([ArrayAttr(shape), typ])  # type: ignore
-        shape = cast(list[int], shape)
+
         return FieldType(
-            [ArrayAttr([IntegerAttr[IntegerType](d, 64) for d in shape]), typ]
+            typ, [ArrayAttr([IntegerAttr[IntegerType](d, 64) for d in shape])]
         )
 
 
