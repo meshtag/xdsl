@@ -6,9 +6,10 @@ from xdsl.dialects.experimental.stencil import (
     FieldType,
     IndexAttr,
 )
-from xdsl.dialects.experimental.stencil import ReturnOp, ResultType, ApplyOp, TempType
+from xdsl.dialects.experimental.stencil import ReturnOp, ResultType, ApplyOp, TempType, LoadOp
+from xdsl.dialects.memref import Load
 from xdsl.dialects.stencil import CastOp
-from xdsl.ir import Block
+from xdsl.ir import Block, OpResult
 from xdsl.utils.exceptions import VerifyException
 from xdsl.utils.test_value import TestSSAValue
 
@@ -184,3 +185,23 @@ def test_stencil_apply_no_results():
     # Should error if there are no results expected
     with pytest.raises(AssertionError):
         ApplyOp.get([], Block([]), [])
+
+
+def test_stencil_load_f32():
+    stencil_fieldtype_ssa_val = TestSSAValue(FieldType.from_shape([-1] * 3, f32))
+    load_op = LoadOp.get(stencil_fieldtype_ssa_val)
+
+    assert type(load_op.results[0]) is OpResult
+    assert type(load_op.results[0].typ) is TempType
+    assert load_op.lb == None
+    assert load_op.ub == None
+
+
+def test_stencil_load_f32_with_lb_and_ub():
+    stencil_fieldtype_ssa_val = TestSSAValue(FieldType.from_shape([2, 3, 5], f32))
+    load_op = LoadOp.get(stencil_fieldtype_ssa_val)
+
+
+
+
+test_stencil_load_f32()

@@ -399,6 +399,8 @@ class LoadOp(IRDLOperation):
             if isa(use.operation, StoreOp):
                 raise VerifyException("Cannot Load and Store the same field!")
 
+        
+
 
 @irdl_op_definition
 class BufferOp(IRDLOperation):
