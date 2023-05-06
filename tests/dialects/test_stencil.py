@@ -1,6 +1,6 @@
 import pytest
 
-from xdsl.dialects.builtin import FloatAttr, f32
+from xdsl.dialects.builtin import FloatAttr, f32, i32, i64, IntegerType
 from xdsl.dialects.builtin import f64
 from xdsl.dialects.experimental.stencil import (
     FieldType,
@@ -184,3 +184,36 @@ def test_stencil_apply_no_results():
     # Should error if there are no results expected
     with pytest.raises(AssertionError):
         ApplyOp.get([], Block([]), [])
+
+
+@pytest.mark.parametrize(
+    "attr, dims",
+    (
+        (i32, [1, 2]),
+        (i32, [1, 2]),
+        (i32, [1, 1, 3]),
+        (i64, [1, 1, 3]),
+    ),
+)
+def test_stencil_fieldtype_constructor(attr: IntegerType, dims: list[int]):
+    stencil_fieldtype = FieldType.from_shape(dims, attr)
+
+    assert stencil_fieldtype.element_type == attr
+    assert stencil_fieldtype.get_num_dims() == len(dims)
+    assert stencil_fieldtype.get_shape() == dims
+
+
+@pytest.mark.parametrize(
+    "attr, dims",
+    (
+        (i32, []),
+        (i64, []),
+    ),
+)
+def test_stencil_fieldtype_constructor(attr: IntegerType, dims: list[int]):
+    with pytest.raises(VerifyException) as exc_info:
+        FieldType.from_shape(dims, attr)
+    assert (
+        exc_info.value.args[0]
+        == "Number of dimensions for desired stencil must be greater than zero."
+    )
